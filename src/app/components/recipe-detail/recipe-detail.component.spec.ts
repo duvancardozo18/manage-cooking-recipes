@@ -1,107 +1,173 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RecipeDetailComponent } from './recipe-detail.component';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Recipe } from '../../domain/entities/recipe.entity';
 import { of, Subject } from 'rxjs';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
 
 describe('RecipeDetailComponent', () => {
     let component: RecipeDetailComponent;
-    let mockApplicationService: any;
+    let fixture: ComponentFixture<RecipeDetailComponent>;
+    let mockRecipeService: any;
     let mockRouter: any;
     let mockActivatedRoute: any;
 
-    beforeEach(async () => {
-        const mockRecipe = new Recipe(
-            '123',
-            'Test Recipe',
-            'Test Description',
-            ['Ingredient 1', 'Ingredient 2'],
-            ['Step 1', 'Step 2'],
-            10,
-            20,
-            4,
-            'medium',
-            'Italian',
-            'test-image.jpg',
-            new Date(),
-            new Date()
-        );
+    const mockRecipe = new Recipe(
+        '1',
+        RecipeName.create('Pasta Carbonara'),
+        'Italian pasta with eggs and bacon',
+        ['Pasta', 'Eggs', 'Bacon'],
+        ['Boil pasta', 'Fry bacon', 'Mix'],
+        CookingTime.create(15),
+        CookingTime.create(20),
+        Servings.create(4),
+        Difficulty.create('medium'),
+        Category.create('Pasta'),
+        'https://example.com/image.jpg',
+        new Date(),
+        new Date()
+    );
 
-        mockApplicationService = {
-            getRecipeById: vi.fn().mockReturnValue(mockRecipe),
-            deleteRecipe: vi.fn().mockReturnValue(true),
-            recipeAdded$: new Subject<Recipe>().asObservable(),
-            recipeUpdated$: new Subject<Recipe>().asObservable(),
-            recipeDeleted$: new Subject<string>().asObservable()
+    beforeEach(async () => {
+        const recipeUpdatedSubject = new Subject<Recipe>();
+        const recipeDeletedSubject = new Subject<string>();
+
+        mockRecipeService = {
+            getRecipeById: jest.fn().mockReturnValue(mockRecipe),
+            deleteRecipe: jest.fn().mockReturnValue(true),
+            recipeUpdated$: recipeUpdatedSubject.asObservable(),
+            recipeDeleted$: recipeDeletedSubject.asObservable(),
         };
 
         mockRouter = {
-            navigate: vi.fn()
+            navigate: jest.fn(),
         };
 
         mockActivatedRoute = {
             snapshot: {
                 paramMap: {
-                    get: vi.fn().mockReturnValue('123')
-                }
+                    get: jest.fn().mockReturnValue('1'),
+                },
             },
-            paramMap: of({
-                get: vi.fn().mockReturnValue('123')
-            })
         };
 
         await TestBed.configureTestingModule({
             imports: [RecipeDetailComponent],
             providers: [
-                { provide: RecipeApplicationService, useValue: mockApplicationService },
+                { provide: RecipeApplicationService, useValue: mockRecipeService },
                 { provide: Router, useValue: mockRouter },
-                { provide: ActivatedRoute, useValue: mockActivatedRoute }
-            ]
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+            ],
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(RecipeDetailComponent);
+        fixture = TestBed.createComponent(RecipeDetailComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
 
     it('should create', () => {
-        expect(component).toBeDefined();
+        expect(component).toBeTruthy();
     });
 
-    it('should load recipe on init', () => {
-        expect(mockApplicationService.getRecipeById).toHaveBeenCalledWith('123');
+    describe('ngOnInit', () => {
+        it('should load recipe by id from route', () => {
+            expect(mockRecipeService.getRecipeById).toHaveBeenCalledWith('1');
+            expect(component.recipe()).toBeDefined();
+            expect(component.recipe()?.id).toBe('1');
+        });
+
+        it('should navigate to recipes if recipe not found', () => {
+            mockRecipeService.getRecipeById.mockReturnValue(null);
+            mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('999');
+
+            const newComponent = new RecipeDetailComponent(
+                mockActivatedRoute,
+                mockRouter,
+                mockRecipeService
+            );
+            newComponent.ngOnInit();
+
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes']);
+        });
+
+        it('should not load recipe if no id in route', () => {
+            mockActivatedRoute.snapshot.paramMap.get.mockReturnValue(null);
+            const newComponent = new RecipeDetailComponent(
+                mockActivatedRoute,
+                mockRouter,
+                mockRecipeService
+            );
+            newComponent.ngOnInit();
+
+            expect(newComponent.recipe()).toBeUndefined();
+        });
     });
 
-    it('should convert recipe to view model', () => {
-        const viewModel = component.recipe();
+    describe('deleteRecipe', () => {
+        it('should delete recipe when confirmed', () => {
+            jest.spyOn(window, 'confirm').mockReturnValue(true);
 
-        expect(viewModel).toBeDefined();
-        expect(viewModel?.name).toBe('Test Recipe');
-        expect(viewModel).toHaveProperty('totalTime');
-        expect(viewModel).toHaveProperty('difficultyColor');
+            component.deleteRecipe();
+
+            expect(mockRecipeService.deleteRecipe).toHaveBeenCalledWith('1');
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes']);
+        });
+
+        it('should not delete recipe when cancelled', () => {
+            jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+            component.deleteRecipe();
+
+            expect(mockRecipeService.deleteRecipe).not.toHaveBeenCalled();
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+        });
+
+        it('should not delete if recipe is undefined', () => {
+            jest.spyOn(window, 'confirm').mockReturnValue(true);
+            component.recipe.set(undefined);
+
+            component.deleteRecipe();
+
+            expect(mockRecipeService.deleteRecipe).not.toHaveBeenCalled();
+        });
     });
 
-    it('should delete recipe and navigate to list', () => {
-        // Mock window.confirm to return true
-        vi.spyOn(window, 'confirm').mockReturnValue(true);
+    describe('getTotalTime', () => {
+        it('should return total cooking time', () => {
+            const totalTime = component.getTotalTime();
+            expect(totalTime).toBe(35); // 15 + 20
+        });
 
-        component.deleteRecipe();
-
-        expect(mockApplicationService.deleteRecipe).toHaveBeenCalledWith('123');
-        expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes']);
+        it('should return 0 if recipe is undefined', () => {
+            component.recipe.set(undefined);
+            const totalTime = component.getTotalTime();
+            expect(totalTime).toBe(0);
+        });
     });
 
-    it('should handle recipe not found', async () => {
-        mockApplicationService.getRecipeById.mockReturnValue(null);
-        mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('999');
+    describe('getDifficultyColor', () => {
+        it('should return difficulty color for recipe', () => {
+            const color = component.getDifficultyColor('medium');
+            expect(typeof color).toBe('string');
+        });
 
-        const fixture = TestBed.createComponent(RecipeDetailComponent);
-        const newComponent = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
+        it('should return default color if recipe is undefined', () => {
+            component.recipe.set(undefined);
+            const color = component.getDifficultyColor('medium');
+            expect(color).toBe('#6b7280');
+        });
+    });
 
-        expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes']);
+    describe('ngOnDestroy', () => {
+        it('should unsubscribe from all subscriptions', () => {
+            const unsubscribeSpy = jest.spyOn(component['subscriptions'], 'unsubscribe');
+            component.ngOnDestroy();
+            expect(unsubscribeSpy).toHaveBeenCalled();
+        });
     });
 });

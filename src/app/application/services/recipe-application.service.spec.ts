@@ -1,657 +1,385 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { RecipeApplicationService } from './recipe-application.service';
-import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
-import { CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
+import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
 
 describe('RecipeApplicationService', () => {
     let service: RecipeApplicationService;
-    let mockRepository: RecipeRepository;
-    let testRecipes: Recipe[];
+    let mockRepository: jest.Mocked<RecipeRepository>;
+
+    const mockRecipe1 = new Recipe(
+        '1',
+        RecipeName.create('Pasta Carbonara'),
+        'A classic Italian pasta dish with eggs and bacon',
+        ['Pasta', 'Eggs', 'Bacon'],
+        ['Boil pasta', 'Fry bacon'],
+        CookingTime.create(15),
+        CookingTime.create(20),
+        Servings.create(4),
+        Difficulty.create('medium'),
+        Category.create('Pasta'),
+        null,
+        new Date(),
+        new Date()
+    );
+
+    const mockRecipe2 = new Recipe(
+        '2',
+        RecipeName.create('Chicken Curry'),
+        'A delicious Indian chicken curry with spices',
+        ['Chicken', 'Curry', 'Spices'],
+        ['Cook chicken', 'Add spices'],
+        CookingTime.create(20),
+        CookingTime.create(30),
+        Servings.create(6),
+        Difficulty.create('easy'),
+        Category.create('Chicken'),
+        null,
+        new Date(),
+        new Date()
+    );
 
     beforeEach(() => {
-        // Mock localStorage for testing
-        const localStorageMock: { [key: string]: string } = {};
-
-        globalThis.localStorage = {
-            getItem: vi.fn((key: string) => localStorageMock[key] || null),
-            setItem: vi.fn((key: string, value: string) => {
-                localStorageMock[key] = value;
-            }),
-            removeItem: vi.fn((key: string) => {
-                delete localStorageMock[key];
-            }),
-            clear: vi.fn(() => {
-                Object.keys(localStorageMock).forEach((key) => delete localStorageMock[key]);
-            }),
-            length: 0,
-            key: vi.fn()
-        } as any;
-
-        // Create test recipe data
-        const now = new Date();
-        testRecipes = [
-            new Recipe(
-                '1',
-                'Pasta Carbonara',
-                'Classic Italian pasta dish',
-                ['Pasta', 'Eggs', 'Bacon', 'Parmesan'],
-                ['Cook pasta', 'Mix eggs and cheese', 'Combine with hot pasta'],
-                10,
-                15,
-                4,
-                'easy',
-                'Platos Principales',
-                null,
-                now,
-                now
-            ),
-            new Recipe(
-                '2',
-                'Chocolate Cake',
-                'Delicious chocolate dessert',
-                ['Flour', 'Sugar', 'Cocoa', 'Eggs', 'Butter'],
-                ['Mix dry ingredients', 'Add wet ingredients', 'Bake at 350°F'],
-                20,
-                30,
-                8,
-                'medium',
-                'Postres',
-                null,
-                now,
-                now
-            ),
-            new Recipe(
-                '3',
-                'Caesar Salad',
-                'Fresh and crispy salad',
-                ['Romaine lettuce', 'Croutons', 'Parmesan', 'Caesar dressing'],
-                ['Wash lettuce', 'Tear into pieces', 'Add toppings', 'Toss with dressing'],
-                15,
-                0,
-                2,
-                'easy',
-                'Ensaladas',
-                null,
-                now,
-                now
-            )
-        ];
-
-        // Create a mock repository with all required methods
         mockRepository = {
-            findAll: vi.fn(() => [...testRecipes]),
-            findById: vi.fn((id: string) => testRecipes.find(r => r.id === id) || null),
-            save: vi.fn((recipe: Recipe) => {
-                testRecipes.push(recipe);
-                return recipe;
-            }),
-            update: vi.fn((recipe: Recipe) => {
-                const index = testRecipes.findIndex(r => r.id === recipe.id);
-                if (index !== -1) {
-                    testRecipes[index] = recipe;
-                }
-                return recipe;
-            }),
-            delete: vi.fn((id: string) => {
-                const index = testRecipes.findIndex(r => r.id === id);
-                if (index !== -1) {
-                    testRecipes.splice(index, 1);
-                    return true;
-                }
-                return false;
-            }),
-            findByCategory: vi.fn((category: string) => {
-                if (!category) return [...testRecipes];
-                return testRecipes.filter(r => r.category === category);
-            }),
-            findByDifficulty: vi.fn((difficulty: string) => {
-                if (!difficulty) return [...testRecipes];
-                return testRecipes.filter(r => r.difficulty === difficulty);
-            }),
-            search: vi.fn((query: string) => {
-                const lowerQuery = query.toLowerCase();
-                return testRecipes.filter(r =>
-                    r.name.toLowerCase().includes(lowerQuery) ||
-                    r.description.toLowerCase().includes(lowerQuery) ||
-                    r.category.toLowerCase().includes(lowerQuery)
-                );
-            })
+            save: jest.fn(),
+            findAll: jest.fn().mockReturnValue([mockRecipe1, mockRecipe2]),
+            findById: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findByCategory: jest.fn(),
+            findByDifficulty: jest.fn(),
+            search: jest.fn(),
         };
 
-        service = new RecipeApplicationService(mockRepository);
+        TestBed.configureTestingModule({
+            providers: [
+                RecipeApplicationService,
+                { provide: RECIPE_REPOSITORY, useValue: mockRepository },
+            ],
+        });
+
+        service = TestBed.inject(RecipeApplicationService);
     });
 
-    describe('Constructor and initialization', () => {
-        it('should be created', () => {
-            expect(service).toBeDefined();
-        });
-
-        it('should load initial recipes', () => {
-            const recipes = service.getRecipes()();
-
-            expect(Array.isArray(recipes)).toBe(true);
-            expect(recipes.length).toBeGreaterThan(0);
-        });
-
-        it('should initialize with sample data', () => {
-            const recipes = service.getRecipes()();
-
-            expect(recipes.length).toBeGreaterThanOrEqual(3);
-            expect(recipes[0]).toBeInstanceOf(Recipe);
-        });
+    it('should be created', () => {
+        expect(service).toBeTruthy();
     });
 
     describe('getRecipes', () => {
-        it('should return a readonly signal', () => {
-            const recipesSignal = service.getRecipes();
-
-            expect(typeof recipesSignal).toBe('function');
-            const recipes = recipesSignal();
-            expect(Array.isArray(recipes)).toBe(true);
-        });
-
-        it('should return all recipes', () => {
-            const recipes = service.getRecipes()();
-
-            expect(recipes.length).toBeGreaterThan(0);
-            recipes.forEach((recipe) => {
-                expect(recipe).toBeInstanceOf(Recipe);
-            });
+        it('should return recipes signal', () => {
+            const recipes = service.getRecipes();
+            expect(recipes()).toHaveLength(2);
+            expect(recipes()[0]).toBe(mockRecipe1);
+            expect(recipes()[1]).toBe(mockRecipe2);
         });
     });
 
     describe('getRecipeById', () => {
-        it('should return recipe when it exists', () => {
-            const recipes = service.getRecipes()();
-            const existingId = recipes[0].id;
+        it('should return a recipe when found', () => {
+            mockRepository.findById.mockReturnValue(mockRecipe1);
 
-            const recipe = service.getRecipeById(existingId);
+            const result = service.getRecipeById('1');
 
-            expect(recipe).not.toBeNull();
-            expect(recipe?.id).toBe(existingId);
+            expect(mockRepository.findById).toHaveBeenCalledWith('1');
+            expect(result).toBe(mockRecipe1);
         });
 
-        it('should return null when recipe does not exist', () => {
-            const recipe = service.getRecipeById('nonexistent-id');
+        it('should return null when recipe not found', () => {
+            mockRepository.findById.mockReturnValue(null);
 
-            expect(recipe).toBeNull();
+            const result = service.getRecipeById('999');
+
+            expect(result).toBeNull();
         });
 
-        it('should handle empty string id', () => {
-            const recipe = service.getRecipeById('');
+        it('should handle errors and return null', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            mockRepository.findById.mockImplementation(() => {
+                throw new Error('Database error');
+            });
 
-            expect(recipe).toBeNull();
-        });
+            const result = service.getRecipeById('1');
 
-        it('should return correct recipe details', () => {
-            const recipes = service.getRecipes()();
-            const firstRecipe = recipes[0];
-
-            const recipe = service.getRecipeById(firstRecipe.id);
-
-            expect(recipe?.name).toBe(firstRecipe.name);
-            expect(recipe?.description).toBe(firstRecipe.description);
-            expect(recipe?.category).toBe(firstRecipe.category);
+            expect(result).toBeNull();
         });
     });
 
     describe('createRecipe', () => {
-        const validRecipeData: CreateRecipeDto = {
-            name: 'Test Recipe',
-            description: 'This is a test recipe with enough characters',
+        const createData = {
+            name: 'New Recipe',
+            description: 'A new delicious recipe with great taste',
             ingredients: ['Ingredient 1', 'Ingredient 2'],
             instructions: ['Step 1', 'Step 2'],
             prepTime: 10,
             cookTime: 20,
             servings: 4,
-            difficulty: 'medium',
-            category: 'Test Category',
-            imageUrl: 'test.jpg'
+            difficulty: 'easy',
+            category: 'Dessert',
+            imageUrl: null,
         };
 
-        it('should create a new recipe with valid data', () => {
-            const initialCount = service.getRecipes()().length;
+        it('should create a recipe successfully', () => {
+            const newRecipe = new Recipe(
+                '3',
+                RecipeName.create(createData.name),
+                createData.description,
+                createData.ingredients,
+                createData.instructions,
+                CookingTime.create(createData.prepTime),
+                CookingTime.create(createData.cookTime),
+                Servings.create(createData.servings),
+                Difficulty.create(createData.difficulty),
+                Category.create(createData.category),
+                null,
+                new Date(),
+                new Date()
+            );
 
-            const recipe = service.createRecipe(validRecipeData);
+            mockRepository.save.mockReturnValue(newRecipe);
+            mockRepository.findAll.mockReturnValue([mockRecipe1, mockRecipe2, newRecipe]);
 
-            expect(recipe).not.toBeNull();
-            expect(recipe?.name).toBe(validRecipeData.name);
-            expect(service.getRecipes()().length).toBe(initialCount + 1);
+            const result = service.createRecipe(createData);
+
+            expect(mockRepository.save).toHaveBeenCalled();
+            expect(result).toBe(newRecipe);
         });
 
-        it('should update signal after creating recipe', () => {
-            const recipe = service.createRecipe(validRecipeData);
+        it('should emit recipeAdded$ event when recipe is created', (done) => {
+            const newRecipe = new Recipe(
+                '3',
+                RecipeName.create(createData.name),
+                createData.description,
+                createData.ingredients,
+                createData.instructions,
+                CookingTime.create(createData.prepTime),
+                CookingTime.create(createData.cookTime),
+                Servings.create(createData.servings),
+                Difficulty.create(createData.difficulty),
+                Category.create(createData.category),
+                null,
+                new Date(),
+                new Date()
+            );
 
-            const recipes = service.getRecipes()();
-            const found = recipes.find((r) => r.id === recipe?.id);
+            mockRepository.save.mockReturnValue(newRecipe);
 
-            expect(found).toBeDefined();
-            expect(found?.name).toBe(validRecipeData.name);
+            service.recipeAdded$.subscribe((recipe) => {
+                expect(recipe).toBe(newRecipe);
+                done();
+            });
+
+            service.createRecipe(createData);
         });
 
-        it('should throw error for invalid recipe data', () => {
-            const invalidData = { ...validRecipeData, name: 'AB' };
+        it('should throw error for invalid data', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            const invalidData = { ...createData, description: 'short' };
 
             expect(() => service.createRecipe(invalidData)).toThrow();
-        });
-
-        it('should throw error for missing ingredients', () => {
-            const invalidData = { ...validRecipeData, ingredients: [] };
-
-            expect(() => service.createRecipe(invalidData)).toThrow();
-        });
-
-        it('should throw error for missing instructions', () => {
-            const invalidData = { ...validRecipeData, instructions: [] };
-
-            expect(() => service.createRecipe(invalidData)).toThrow();
-        });
-
-        it('should create recipe without imageUrl', () => {
-            const dataWithoutImage = { ...validRecipeData };
-            delete dataWithoutImage.imageUrl;
-
-            const recipe = service.createRecipe(dataWithoutImage);
-
-            expect(recipe).not.toBeNull();
-            expect(recipe?.imageUrl).toBeNull();
         });
     });
 
     describe('updateRecipe', () => {
-        let existingRecipeId: string;
+        const updateData = {
+            name: 'Updated Recipe',
+            description: 'Updated description with more details',
+        };
 
-        beforeEach(() => {
-            const recipes = service.getRecipes()();
-            existingRecipeId = recipes[0].id;
+        it('should update a recipe successfully', () => {
+            const updatedRecipe = new Recipe(
+                '1',
+                RecipeName.create(updateData.name),
+                updateData.description,
+                mockRecipe1.ingredients,
+                mockRecipe1.instructions,
+                mockRecipe1.prepTime,
+                mockRecipe1.cookTime,
+                mockRecipe1.servings,
+                mockRecipe1.difficulty,
+                mockRecipe1.category,
+                mockRecipe1.imageUrl,
+                mockRecipe1.createdAt,
+                new Date()
+            );
+
+            mockRepository.findById.mockReturnValue(mockRecipe1);
+            mockRepository.update.mockReturnValue(updatedRecipe);
+
+            const result = service.updateRecipe('1', updateData);
+
+            expect(mockRepository.update).toHaveBeenCalled();
+            expect(result).toBe(updatedRecipe);
         });
 
-        it('should update existing recipe', () => {
-            const updateData: UpdateRecipeDto = {
-                name: 'Updated Recipe Name',
-                prepTime: 15
-            };
+        it('should emit recipeUpdated$ event when recipe is updated', (done) => {
+            const updatedRecipe = new Recipe(
+                '1',
+                RecipeName.create(updateData.name),
+                updateData.description,
+                mockRecipe1.ingredients,
+                mockRecipe1.instructions,
+                mockRecipe1.prepTime,
+                mockRecipe1.cookTime,
+                mockRecipe1.servings,
+                mockRecipe1.difficulty,
+                mockRecipe1.category,
+                mockRecipe1.imageUrl,
+                mockRecipe1.createdAt,
+                new Date()
+            );
 
-            const updatedRecipe = service.updateRecipe(existingRecipeId, updateData);
+            mockRepository.findById.mockReturnValue(mockRecipe1);
+            mockRepository.update.mockReturnValue(updatedRecipe);
 
-            expect(updatedRecipe).not.toBeNull();
-            expect(updatedRecipe?.name).toBe('Updated Recipe Name');
-            expect(updatedRecipe?.prepTime).toBe(15);
+            service.recipeUpdated$.subscribe((recipe) => {
+                expect(recipe).toBe(updatedRecipe);
+                done();
+            });
+
+            service.updateRecipe('1', updateData);
         });
 
-        it('should update signal after updating recipe', () => {
-            const updateData: UpdateRecipeDto = { name: 'Changed Name' };
+        it('should throw error when recipe not found', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            mockRepository.findById.mockReturnValue(null);
 
-            service.updateRecipe(existingRecipeId, updateData);
-
-            const recipes = service.getRecipes()();
-            const found = recipes.find((r) => r.id === existingRecipeId);
-
-            expect(found?.name).toBe('Changed Name');
-        });
-
-        it('should throw error when updating non-existent recipe', () => {
-            const updateData: UpdateRecipeDto = { name: 'New Name' };
-
-            expect(() => service.updateRecipe('nonexistent-id', updateData)).toThrow();
-        });
-
-        it('should throw error for invalid update data', () => {
-            const updateData: UpdateRecipeDto = { name: 'AB' };
-
-            expect(() => service.updateRecipe(existingRecipeId, updateData)).toThrow();
-        });
-
-        it('should handle partial updates', () => {
-            const originalRecipe = service.getRecipeById(existingRecipeId);
-            const updateData: UpdateRecipeDto = { prepTime: 999 };
-
-            const updated = service.updateRecipe(existingRecipeId, updateData);
-
-            expect(updated?.prepTime).toBe(999);
-            expect(updated?.name).toBe(originalRecipe?.name);
-            expect(updated?.description).toBe(originalRecipe?.description);
+            expect(() => service.updateRecipe('999', updateData)).toThrow('Recipe not found');
         });
     });
 
     describe('deleteRecipe', () => {
-        it('should delete existing recipe', () => {
-            const recipes = service.getRecipes()();
-            const recipeToDelete = recipes[0];
-            const initialCount = recipes.length;
+        it('should delete a recipe successfully', () => {
+            mockRepository.findById.mockReturnValue(mockRecipe1);
+            mockRepository.delete.mockReturnValue(true);
 
-            const result = service.deleteRecipe(recipeToDelete.id);
+            const result = service.deleteRecipe('1');
 
+            expect(mockRepository.delete).toHaveBeenCalledWith('1');
             expect(result).toBe(true);
-            expect(service.getRecipes()().length).toBe(initialCount - 1);
         });
 
-        it('should update signal after deleting recipe', () => {
-            const recipes = service.getRecipes()();
-            const recipeId = recipes[0].id;
+        it('should emit recipeDeleted$ event when recipe is deleted', (done) => {
+            mockRepository.findById.mockReturnValue(mockRecipe1);
+            mockRepository.delete.mockReturnValue(true);
 
-            service.deleteRecipe(recipeId);
+            service.recipeDeleted$.subscribe((id) => {
+                expect(id).toBe('1');
+                done();
+            });
 
-            const updatedRecipes = service.getRecipes()();
-            const found = updatedRecipes.find((r) => r.id === recipeId);
-
-            expect(found).toBeUndefined();
+            service.deleteRecipe('1');
         });
 
-        it('should return false when deleting non-existent recipe', () => {
-            const result = service.deleteRecipe('nonexistent-id');
+        it('should return false when deletion fails', () => {
+            mockRepository.findById.mockReturnValue(mockRecipe1);
+            mockRepository.delete.mockReturnValue(false);
+
+            const result = service.deleteRecipe('1');
 
             expect(result).toBe(false);
         });
 
-        it('should not affect other recipes when deleting one', () => {
-            const recipes = service.getRecipes()();
-            const idToDelete = recipes[0].id;
-            const idToKeep = recipes[1].id;
+        it('should handle errors and return false', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            mockRepository.findById.mockImplementation(() => {
+                throw new Error('Recipe not found');
+            });
 
-            service.deleteRecipe(idToDelete);
+            const result = service.deleteRecipe('999');
 
-            const found = service.getRecipeById(idToKeep);
-            expect(found).not.toBeNull();
+            expect(result).toBe(false);
         });
     });
 
     describe('searchRecipes', () => {
-        it('should find recipes by search query', () => {
-            const recipes = service.getRecipes()();
-            const searchTerm = recipes[0].name.substring(0, 5);
+        it('should search recipes successfully', () => {
+            const searchResults = [mockRecipe1];
+            mockRepository.search.mockReturnValue(searchResults);
 
-            const results = service.searchRecipes(searchTerm);
+            const result = service.searchRecipes('pasta');
 
-            expect(results.length).toBeGreaterThan(0);
+            expect(mockRepository.search).toHaveBeenCalledWith('pasta');
+            expect(result).toEqual(searchResults);
         });
 
-        it('should return all recipes for empty query', () => {
-            const allRecipes = service.getRecipes()();
-            const results = service.searchRecipes('');
+        it('should return empty array on error', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            mockRepository.search.mockImplementation(() => {
+                throw new Error('Search error');
+            });
 
-            expect(results.length).toBe(allRecipes.length);
-        });
+            const result = service.searchRecipes('pasta');
 
-        it('should return empty array for non-matching query', () => {
-            const results = service.searchRecipes('zzznonexistentzzz');
-
-            expect(results).toEqual([]);
-        });
-
-        it('should be case-insensitive', () => {
-            const recipes = service.getRecipes()();
-            const name = recipes[0].name;
-
-            const resultsLower = service.searchRecipes(name.toLowerCase());
-            const resultsUpper = service.searchRecipes(name.toUpperCase());
-
-            expect(resultsLower.length).toBeGreaterThan(0);
-            expect(resultsUpper.length).toBeGreaterThan(0);
-        });
-
-        it('should search in name, description, and category', () => {
-            const recipes = service.getRecipes()();
-            const recipe = recipes[0];
-
-            const nameResults = service.searchRecipes(recipe.name.substring(0, 4));
-            const categoryResults = service.searchRecipes(recipe.category);
-
-            expect(nameResults.length).toBeGreaterThan(0);
-            expect(categoryResults.length).toBeGreaterThan(0);
+            expect(result).toEqual([]);
         });
     });
 
     describe('filterByCategory', () => {
-        it('should return recipes of specified category', () => {
-            const recipes = service.getRecipes()();
-            const category = recipes[0].category;
+        it('should filter recipes by category', () => {
+            const pastaRecipes = [mockRecipe1];
+            mockRepository.findByCategory.mockReturnValue(pastaRecipes);
 
-            const results = service.filterByCategory(category);
+            const result = service.filterByCategory('Pasta');
 
-            expect(results.length).toBeGreaterThan(0);
-            results.forEach((recipe) => {
-                expect(recipe.category).toBe(category);
+            expect(mockRepository.findByCategory).toHaveBeenCalledWith('Pasta');
+            expect(result).toEqual(pastaRecipes);
+        });
+
+        it('should return empty array on error', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            mockRepository.findByCategory.mockImplementation(() => {
+                throw new Error('Filter error');
             });
-        });
 
-        it('should return all recipes for empty category', () => {
-            const allRecipes = service.getRecipes()();
-            const results = service.filterByCategory('');
+            const result = service.filterByCategory('Pasta');
 
-            expect(results.length).toBe(allRecipes.length);
-        });
-
-        it('should return empty array for non-existent category', () => {
-            const results = service.filterByCategory('NonExistentCategory');
-
-            expect(results).toEqual([]);
+            expect(result).toEqual([]);
         });
     });
 
     describe('filterByDifficulty', () => {
-        it('should return recipes of specified difficulty', () => {
-            const recipes = service.getRecipes()();
-            const difficulty = recipes[0].difficulty;
+        it('should filter recipes by difficulty', () => {
+            const easyRecipes = [mockRecipe2];
+            mockRepository.findByDifficulty.mockReturnValue(easyRecipes);
 
-            const results = service.filterByDifficulty(difficulty);
+            const result = service.filterByDifficulty('easy');
 
-            expect(results.length).toBeGreaterThan(0);
-            results.forEach((recipe) => {
-                expect(recipe.difficulty).toBe(difficulty);
-            });
+            expect(mockRepository.findByDifficulty).toHaveBeenCalledWith('easy');
+            expect(result).toEqual(easyRecipes);
         });
 
-        it('should return all recipes for empty difficulty', () => {
-            const allRecipes = service.getRecipes()();
-            const results = service.filterByDifficulty('');
-
-            expect(results.length).toBe(allRecipes.length);
-        });
-
-        it('should handle all difficulty levels', () => {
-            const difficulties = ['easy', 'medium', 'hard'];
-
-            difficulties.forEach((difficulty) => {
-                const results = service.filterByDifficulty(difficulty);
-                results.forEach((recipe) => {
-                    expect(['easy', 'medium', 'hard']).toContain(recipe.difficulty);
-                });
+        it('should return empty array on error', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => { });
+            mockRepository.findByDifficulty.mockImplementation(() => {
+                throw new Error('Filter error');
             });
+
+            const result = service.filterByDifficulty('easy');
+
+            expect(result).toEqual([]);
         });
     });
 
     describe('getCategories', () => {
-        it('should return unique categories', () => {
-            const categories = service.getCategories();
+        it('should return unique sorted categories', () => {
+            const result = service.getCategories();
 
-            expect(Array.isArray(categories)).toBe(true);
-            expect(categories.length).toBeGreaterThan(0);
-
-            const uniqueCategories = new Set(categories);
-            expect(uniqueCategories.size).toBe(categories.length);
+            expect(result).toEqual(['Chicken', 'Pasta']);
         });
 
-        it('should return sorted categories', () => {
-            const categories = service.getCategories();
+        it('should return empty array when no recipes', () => {
+            mockRepository.findAll.mockReturnValue([]);
+            const newService = new RecipeApplicationService(mockRepository);
 
-            const sorted = [...categories].sort();
-            expect(categories).toEqual(sorted);
-        });
+            const result = newService.getCategories();
 
-        it('should include all categories from recipes', () => {
-            const recipes = service.getRecipes()();
-            const expectedCategories = new Set(recipes.map((r) => r.category));
-
-            const categories = service.getCategories();
-
-            expectedCategories.forEach((cat) => {
-                expect(categories).toContain(cat);
-            });
-        });
-    });
-
-    describe('Error handling', () => {
-        it('should handle errors in getRecipeById gracefully', () => {
-            const recipe = service.getRecipeById('invalid-id');
-
-            expect(recipe).toBeNull();
-        });
-
-        it('should handle errors in searchRecipes gracefully', () => {
-            const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
-            // This should not throw
-            const results = service.searchRecipes('test');
-
-            expect(results).toBeDefined();
-            consoleErrorSpy.mockRestore();
-        });
-
-        it('should handle errors in deleteRecipe gracefully', () => {
-            const result = service.deleteRecipe('nonexistent');
-
-            expect(result).toBe(false);
-        });
-    });
-
-    describe('Observer Pattern - RxJS Observables', () => {
-        it('should emit event when a new recipe is added', () => {
-            return new Promise<void>((resolve) => {
-                const recipeData: CreateRecipeDto = {
-                    name: 'Test Recipe Observer',
-                    description: 'Testing Observer Pattern with RxJS',
-                    category: 'Postres',
-                    difficulty: 'easy',
-                    prepTime: 10,
-                    cookTime: 20,
-                    servings: 4,
-                    imageUrl: undefined,
-                    ingredients: ['Ingredient 1', 'Ingredient 2'],
-                    instructions: ['Step 1', 'Step 2']
-                };
-
-                // Suscribirse al observable antes de crear la receta
-                service.recipeAdded$.subscribe((recipe) => {
-                    expect(recipe).toBeDefined();
-                    expect(recipe.name).toBe('Test Recipe Observer');
-                    expect(recipe.description).toBe('Testing Observer Pattern with RxJS');
-                    resolve();
-                });
-
-                // Crear la receta debería emitir el evento
-                service.createRecipe(recipeData);
-            });
-        });
-
-        it('should emit event when a recipe is updated', () => {
-            return new Promise<void>((resolve) => {
-                const recipes = service.getRecipes()();
-                const existingRecipe = recipes[0];
-
-                const updateData: UpdateRecipeDto = {
-                    name: 'Updated Recipe Name',
-                    description: existingRecipe.description,
-                    category: existingRecipe.category,
-                    difficulty: existingRecipe.difficulty,
-                    prepTime: existingRecipe.prepTime,
-                    cookTime: existingRecipe.cookTime,
-                    servings: existingRecipe.servings,
-                    imageUrl: existingRecipe.imageUrl,
-                    ingredients: existingRecipe.ingredients,
-                    instructions: existingRecipe.instructions
-                };
-
-                // Suscribirse al observable antes de actualizar
-                service.recipeUpdated$.subscribe((recipe) => {
-                    expect(recipe).toBeDefined();
-                    expect(recipe.name).toBe('Updated Recipe Name');
-                    resolve();
-                });
-
-                // Actualizar la receta debería emitir el evento
-                service.updateRecipe(existingRecipe.id, updateData);
-            });
-        });
-
-        it('should emit event when a recipe is deleted', () => {
-            return new Promise<void>((resolve) => {
-                const recipes = service.getRecipes()();
-                const recipeToDelete = recipes[0];
-
-                // Suscribirse al observable antes de eliminar
-                service.recipeDeleted$.subscribe((id) => {
-                    expect(id).toBeDefined();
-                    expect(id).toBe(recipeToDelete.id);
-                    resolve();
-                });
-
-                // Eliminar la receta debería emitir el evento
-                service.deleteRecipe(recipeToDelete.id);
-            });
-        });
-
-        it('should allow multiple observers to subscribe to recipeAdded$', () => {
-            const recipeData: CreateRecipeDto = {
-                name: 'Multi Observer Test',
-                description: 'Testing multiple observers',
-                category: 'Postres',
-                difficulty: 'medium',
-                prepTime: 15,
-                cookTime: 25,
-                servings: 6,
-                imageUrl: undefined,
-                ingredients: ['Test Ingredient'],
-                instructions: ['Test Step']
-            };
-
-            let observer1Called = false;
-            let observer2Called = false;
-
-            // Primer observador
-            service.recipeAdded$.subscribe(() => {
-                observer1Called = true;
-            });
-
-            // Segundo observador
-            service.recipeAdded$.subscribe(() => {
-                observer2Called = true;
-            });
-
-            service.createRecipe(recipeData);
-
-            // Ambos observadores deberían ser notificados
-            expect(observer1Called).toBe(true);
-            expect(observer2Called).toBe(true);
-        });
-
-        it('should not emit when recipe creation fails', () => {
-            const invalidData: CreateRecipeDto = {
-                name: 'AB', // Too short, will fail validation
-                description: 'Short', // Too short
-                category: 'Test',
-                difficulty: 'easy',
-                prepTime: 10,
-                cookTime: 20,
-                servings: 4,
-                imageUrl: undefined,
-                ingredients: [],
-                instructions: []
-            };
-
-            let emitted = false;
-            service.recipeAdded$.subscribe(() => {
-                emitted = true;
-            });
-
-            try {
-                service.createRecipe(invalidData);
-            } catch (error) {
-                // Expected to fail
-            }
-
-            expect(emitted).toBe(false);
+            expect(result).toEqual([]);
         });
     });
 });

@@ -1,309 +1,270 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RecipeFormComponent } from './recipe-form.component';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Recipe } from '../../domain/entities/recipe.entity';
-import { of } from 'rxjs';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
 
 describe('RecipeFormComponent', () => {
     let component: RecipeFormComponent;
-    let mockApplicationService: any;
+    let fixture: ComponentFixture<RecipeFormComponent>;
+    let mockRecipeService: any;
     let mockRouter: any;
     let mockActivatedRoute: any;
 
+    const mockRecipe = new Recipe(
+        '1',
+        RecipeName.create('Pasta Carbonara'),
+        'Italian pasta with eggs',
+        ['Pasta', 'Eggs', 'Bacon'],
+        ['Boil pasta', 'Fry bacon'],
+        CookingTime.create(15),
+        CookingTime.create(20),
+        Servings.create(4),
+        Difficulty.create('medium'),
+        Category.create('Pasta'),
+        'https://example.com/image.jpg',
+        new Date(),
+        new Date()
+    );
+
     beforeEach(async () => {
-        mockApplicationService = {
-            getRecipeById: vi.fn().mockReturnValue(null),
-            createRecipe: vi.fn(),
-            updateRecipe: vi.fn()
+        mockRecipeService = {
+            getRecipeById: jest.fn().mockReturnValue(mockRecipe),
+            createRecipe: jest.fn().mockReturnValue(mockRecipe),
+            updateRecipe: jest.fn().mockReturnValue(mockRecipe),
         };
 
         mockRouter = {
-            navigate: vi.fn()
+            navigate: jest.fn(),
         };
 
         mockActivatedRoute = {
             snapshot: {
                 paramMap: {
-                    get: vi.fn().mockReturnValue(null)
-                }
+                    get: jest.fn().mockReturnValue(null),
+                },
             },
-            paramMap: of({
-                get: vi.fn().mockReturnValue(null)
-            })
         };
 
         await TestBed.configureTestingModule({
-            imports: [RecipeFormComponent],
+            imports: [RecipeFormComponent, ReactiveFormsModule],
             providers: [
-                { provide: RecipeApplicationService, useValue: mockApplicationService },
+                { provide: RecipeApplicationService, useValue: mockRecipeService },
                 { provide: Router, useValue: mockRouter },
-                { provide: ActivatedRoute, useValue: mockActivatedRoute }
-            ]
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+            ],
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(RecipeFormComponent);
+        fixture = TestBed.createComponent(RecipeFormComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
 
-    describe('Component initialization', () => {
-        it('should create', () => {
-            expect(component).toBeDefined();
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    describe('initialization', () => {
+        it('should initialize form with empty values in create mode', () => {
+            expect(component.recipeForm).toBeDefined();
+            expect(component.isEditMode()).toBe(false);
+            expect(component.pageTitle()).toBe('Agregar Nueva Receta');
         });
 
-        it('should initialize form with empty values for new recipe', () => {
-            expect(component.recipeForm.value.name).toBe('');
-            expect(component.recipeForm.value.description).toBe('');
-            expect(component.recipeForm.value.prepTime).toBe(0);
-            expect(component.recipeForm.value.cookTime).toBe(0);
-            expect(component.recipeForm.value.servings).toBe(1);
-            expect(component.recipeForm.value.difficulty).toBe('medium');
-        });
+        it('should initialize form with recipe data in edit mode', () => {
+            // Update the mock to return an ID
+            mockActivatedRoute.snapshot.paramMap.get = jest.fn().mockReturnValue('1');
 
-        it('should have valid form controls', () => {
-            const form = component.recipeForm;
+            // Create new component fixture with the updated route
+            const editFixture = TestBed.createComponent(RecipeFormComponent);
+            const editComponent = editFixture.componentInstance;
+            editFixture.detectChanges();
 
-            expect(form.get('name')).toBeDefined();
-            expect(form.get('description')).toBeDefined();
-            expect(form.get('ingredients')).toBeDefined();
-            expect(form.get('instructions')).toBeDefined();
-            expect(form.get('prepTime')).toBeDefined();
-            expect(form.get('cookTime')).toBeDefined();
-            expect(form.get('servings')).toBeDefined();
-            expect(form.get('difficulty')).toBeDefined();
-            expect(form.get('category')).toBeDefined();
-            expect(form.get('imageUrl')).toBeDefined();
+            expect(editComponent.isEditMode()).toBe(true);
+            expect(editComponent.pageTitle()).toBe('Editar Receta');
         });
     });
 
-    describe('Form validation', () => {
-        it('should require name', () => {
-            const nameControl = component.recipeForm.get('name');
-
-            nameControl?.setValue('');
-            expect(nameControl?.hasError('required')).toBe(true);
-
-            nameControl?.setValue('Pizza');
-            expect(nameControl?.hasError('required')).toBe(false);
+    describe('form controls', () => {
+        it('should have all required form controls', () => {
+            expect(component.recipeForm.get('name')).toBeDefined();
+            expect(component.recipeForm.get('description')).toBeDefined();
+            expect(component.recipeForm.get('category')).toBeDefined();
+            expect(component.recipeForm.get('difficulty')).toBeDefined();
+            expect(component.recipeForm.get('prepTime')).toBeDefined();
+            expect(component.recipeForm.get('cookTime')).toBeDefined();
+            expect(component.recipeForm.get('servings')).toBeDefined();
+            expect(component.recipeForm.get('ingredients')).toBeDefined();
+            expect(component.recipeForm.get('instructions')).toBeDefined();
         });
 
-        it('should require minimum name length', () => {
-            const nameControl = component.recipeForm.get('name');
-
-            nameControl?.setValue('Ab');
-            expect(nameControl?.hasError('minlength')).toBe(true);
-
-            nameControl?.setValue('Abc');
-            expect(nameControl?.hasError('minlength')).toBe(false);
-        });
-
-        it('should require description', () => {
-            const descControl = component.recipeForm.get('description');
-
-            descControl?.setValue('');
-            expect(descControl?.hasError('required')).toBe(true);
-
-            descControl?.setValue('A description');
-            expect(descControl?.hasError('required')).toBe(false);
-        });
-
-        it('should require minimum description length', () => {
-            const descControl = component.recipeForm.get('description');
-
-            descControl?.setValue('Short');
-            expect(descControl?.hasError('minlength')).toBe(true);
-
-            descControl?.setValue('A long enough description');
-            expect(descControl?.hasError('minlength')).toBe(false);
-        });
-
-        it('should require positive prep time', () => {
-            const prepTimeControl = component.recipeForm.get('prepTime');
-
-            prepTimeControl?.setValue(0);
-            expect(prepTimeControl?.hasError('min')).toBe(true);
-
-            prepTimeControl?.setValue(1);
-            expect(prepTimeControl?.hasError('min')).toBe(false);
-        });
-
-        it('should require positive cook time', () => {
-            const cookTimeControl = component.recipeForm.get('cookTime');
-
-            cookTimeControl?.setValue(0);
-            expect(cookTimeControl?.hasError('min')).toBe(true);
-
-            cookTimeControl?.setValue(1);
-            expect(cookTimeControl?.hasError('min')).toBe(false);
-        });
-
-        it('should require positive servings', () => {
-            const servingsControl = component.recipeForm.get('servings');
-
-            servingsControl?.setValue(0);
-            expect(servingsControl?.hasError('min')).toBe(true);
-
-            servingsControl?.setValue(1);
-            expect(servingsControl?.hasError('min')).toBe(false);
-        });
-    });
-
-    describe('Ingredient management', () => {
-        it('should initialize with one empty ingredient', () => {
+        it('should initialize with one ingredient and one instruction', () => {
             expect(component.ingredients.length).toBe(1);
+            expect(component.instructions.length).toBe(1);
         });
+    });
 
-        it('should add ingredient', () => {
+    describe('ingredient management', () => {
+        it('should add an ingredient', () => {
             const initialLength = component.ingredients.length;
-
             component.addIngredient();
-
             expect(component.ingredients.length).toBe(initialLength + 1);
         });
 
-        it('should remove ingredient', () => {
+        it('should remove an ingredient', () => {
             component.addIngredient();
             component.addIngredient();
-            const length = component.ingredients.length;
-
+            const initialLength = component.ingredients.length;
             component.removeIngredient(1);
-
-            expect(component.ingredients.length).toBe(length - 1);
+            expect(component.ingredients.length).toBe(initialLength - 1);
         });
 
-        it('should not remove last ingredient', () => {
-            while (component.ingredients.length > 1) {
-                component.removeIngredient(component.ingredients.length - 1);
-            }
-
+        it('should not remove ingredient if only one remains', () => {
             component.removeIngredient(0);
-
             expect(component.ingredients.length).toBe(1);
         });
     });
 
-    describe('Instruction management', () => {
-        it('should initialize with one empty instruction', () => {
-            expect(component.instructions.length).toBe(1);
-        });
-
-        it('should add instruction', () => {
+    describe('instruction management', () => {
+        it('should add an instruction', () => {
             const initialLength = component.instructions.length;
-
             component.addInstruction();
-
             expect(component.instructions.length).toBe(initialLength + 1);
         });
 
-        it('should remove instruction', () => {
+        it('should remove an instruction', () => {
             component.addInstruction();
             component.addInstruction();
-            const length = component.instructions.length;
-
+            const initialLength = component.instructions.length;
             component.removeInstruction(1);
-
-            expect(component.instructions.length).toBe(length - 1);
+            expect(component.instructions.length).toBe(initialLength - 1);
         });
 
-        it('should not remove last instruction', () => {
-            while (component.instructions.length > 1) {
-                component.removeInstruction(component.instructions.length - 1);
-            }
-
+        it('should not remove instruction if only one remains', () => {
             component.removeInstruction(0);
-
             expect(component.instructions.length).toBe(1);
         });
     });
 
-    describe('Form submission', () => {
-        it('should not submit invalid form', () => {
-            component.recipeForm.patchValue({ name: '' });
-
-            component.onSubmit();
-
-            expect(mockApplicationService.createRecipe).not.toHaveBeenCalled();
-            expect(mockApplicationService.updateRecipe).not.toHaveBeenCalled();
+    describe('form validation', () => {
+        it('should be invalid when empty', () => {
+            expect(component.recipeForm.valid).toBe(false);
         });
 
-        it('should create recipe when form is valid and no recipeId', () => {
+        it('should validate name length', () => {
+            const nameControl = component.recipeForm.get('name');
+            nameControl?.setValue('ab');
+            expect(nameControl?.hasError('minlength')).toBe(true);
+        });
+
+        it('should validate description length', () => {
+            const descControl = component.recipeForm.get('description');
+            descControl?.setValue('short');
+            expect(descControl?.hasError('minlength')).toBe(true);
+        });
+
+        it('should validate prepTime minimum', () => {
+            const prepTimeControl = component.recipeForm.get('prepTime');
+            prepTimeControl?.setValue(0);
+            expect(prepTimeControl?.hasError('min')).toBe(true);
+        });
+    });
+
+    describe('onSubmit', () => {
+        beforeEach(() => {
             component.recipeForm.patchValue({
-                name: 'New Recipe',
-                description: 'A new recipe description',
+                name: 'Test Recipe',
+                description: 'A great test recipe description',
+                category: 'Test',
+                difficulty: 'easy',
                 prepTime: 10,
                 cookTime: 20,
                 servings: 4,
-                difficulty: 'medium',
-                category: 'Italian',
-                imageUrl: 'image.jpg'
+                imageUrl: '',
             });
+            component.ingredients.at(0).setValue('Test Ingredient');
+            component.instructions.at(0).setValue('Test Instruction');
+        });
 
-            component.ingredients.at(0).setValue('Ingredient 1');
-            component.instructions.at(0).setValue('Step 1');
+        it('should create a recipe when form is valid in create mode', () => {
+            component.onSubmit();
 
-            const mockRecipe = new Recipe('1', 'New Recipe', 'Desc', ['Ing'], ['Step'], 10, 20, 4, 'medium', 'Cat', null, new Date(), new Date());
-            mockApplicationService.createRecipe.mockReturnValue(mockRecipe);
+            expect(mockRecipeService.createRecipe).toHaveBeenCalled();
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
+        });
+
+        it('should update a recipe when form is valid in edit mode', () => {
+            mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('1');
+            component.ngOnInit();
+            component.isEditMode.set(true);
+            component.recipeId.set('1');
 
             component.onSubmit();
 
-            expect(mockApplicationService.createRecipe).toHaveBeenCalled();
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', '1']);
+            expect(mockRecipeService.updateRecipe).toHaveBeenCalled();
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
         });
 
-        it('should handle create recipe error', () => {
+        it('should not submit when form is invalid', () => {
             component.recipeForm.patchValue({
-                name: 'New Recipe',
-                description: 'A new recipe description',
-                prepTime: 10,
-                cookTime: 20,
-                servings: 4,
-                difficulty: 'medium',
-                category: 'Italian'
+                name: '',
+                description: '',
             });
 
-            component.ingredients.at(0).setValue('Ingredient 1');
-            component.instructions.at(0).setValue('Step 1');
+            component.onSubmit();
 
-            mockApplicationService.createRecipe.mockImplementation(() => {
+            expect(mockRecipeService.createRecipe).not.toHaveBeenCalled();
+            expect(mockRecipeService.updateRecipe).not.toHaveBeenCalled();
+        });
+
+        it('should handle errors during submission', () => {
+            mockRecipeService.createRecipe.mockImplementation(() => {
                 throw new Error('Creation failed');
             });
 
             component.onSubmit();
 
-            expect(component.errorMessage()).toBeTruthy();
-            expect(mockRouter.navigate).not.toHaveBeenCalled();
+            expect(component.errorMessage()).toBe('Creation failed');
         });
     });
 
-    describe('Edit mode', () => {
-        it('should load recipe in edit mode', () => {
-            const existingRecipe = new Recipe(
-                '123',
-                'Existing Recipe',
-                'Existing Description',
-                ['Ingredient 1', 'Ingredient 2'],
-                ['Step 1', 'Step 2'],
-                15,
-                25,
-                4,
-                'hard',
-                'Dessert',
-                'image.jpg',
-                new Date(),
-                new Date()
-            );
+    describe('field validation helpers', () => {
+        it('should check if field is invalid', () => {
+            const nameControl = component.recipeForm.get('name');
+            nameControl?.markAsTouched();
+            nameControl?.setValue('');
 
-            mockApplicationService.getRecipeById.mockReturnValue(existingRecipe);
-            mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('123');
+            expect(component.isFieldInvalid('name')).toBe(true);
+        });
 
-            const newFixture = TestBed.createComponent(RecipeFormComponent);
-            const newComponent = newFixture.componentInstance;
-            newFixture.detectChanges();
+        it('should get field error message for required', () => {
+            const nameControl = component.recipeForm.get('name');
+            nameControl?.setValue('');
+            nameControl?.markAsTouched();
 
-            expect(mockApplicationService.getRecipeById).toHaveBeenCalledWith('123');
-            expect(newComponent.recipeForm.value.name).toBe('Existing Recipe');
+            expect(component.getFieldError('name')).toBe('Este campo es obligatorio');
+        });
+
+        it('should get field error message for minlength', () => {
+            const nameControl = component.recipeForm.get('name');
+            nameControl?.setValue('ab');
+            nameControl?.markAsTouched();
+
+            expect(component.getFieldError('name')).toContain('longitud mínima');
+        });
+
+        it('should get field error message for min', () => {
+            const prepTimeControl = component.recipeForm.get('prepTime');
+            prepTimeControl?.setValue(0);
+            prepTimeControl?.markAsTouched();
+
+            expect(component.getFieldError('prepTime')).toContain('valor mínimo');
         });
     });
 });

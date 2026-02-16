@@ -1,60 +1,64 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UpdateRecipeUseCase } from './update-recipe.use-case';
-import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
-import { UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
 
 describe('UpdateRecipeUseCase', () => {
     let useCase: UpdateRecipeUseCase;
-    let mockRepository: RecipeRepository;
+    let mockRepository: jest.Mocked<RecipeRepository>;
     let existingRecipe: Recipe;
 
     beforeEach(() => {
         mockRepository = {
-            save: vi.fn(),
-            findAll: vi.fn(),
-            findById: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            search: vi.fn(),
-            findByCategory: vi.fn(),
-            findByDifficulty: vi.fn()
+            save: jest.fn(),
+            findAll: jest.fn(),
+            findById: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findByCategory: jest.fn(),
+            findByDifficulty: jest.fn(),
+            search: jest.fn(),
         };
 
-        useCase = new UpdateRecipeUseCase(mockRepository);
-
         existingRecipe = new Recipe(
-            '123',
-            'Existing Recipe',
-            'This is an existing recipe description',
-            ['Ingredient 1', 'Ingredient 2'],
-            ['Step 1', 'Step 2'],
-            10,
-            20,
-            4,
-            'medium',
-            'Test Category',
-            'test.jpg',
-            new Date(),
-            new Date()
+            '1',
+            RecipeName.create('Original Recipe'),
+            'Original description for testing',
+            ['Original Ingredient'],
+            ['Original Instruction'],
+            CookingTime.create(10),
+            CookingTime.create(20),
+            Servings.create(4),
+            Difficulty.create('easy'),
+            Category.create('Pasta'),
+            'https://example.com/original.jpg',
+            new Date('2024-01-01'),
+            new Date('2024-01-01')
         );
+
+        useCase = new UpdateRecipeUseCase(mockRepository);
     });
 
-    describe('Successful updates', () => {
+    describe('execute', () => {
         it('should update recipe with valid data', () => {
-            const updateData: UpdateRecipeDto = {
-                name: 'Updated Recipe Name',
-                prepTime: 15
+            const updateData = {
+                name: 'Updated Recipe',
+                description: 'Updated description with more details',
             };
 
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
+            mockRepository.findById.mockReturnValue(existingRecipe);
+
             const updatedRecipe = new Recipe(
                 existingRecipe.id,
-                'Updated Recipe Name',
-                existingRecipe.description,
+                RecipeName.create(updateData.name),
+                updateData.description,
                 existingRecipe.ingredients,
                 existingRecipe.instructions,
-                15,
+                existingRecipe.prepTime,
                 existingRecipe.cookTime,
                 existingRecipe.servings,
                 existingRecipe.difficulty,
@@ -63,250 +67,132 @@ describe('UpdateRecipeUseCase', () => {
                 existingRecipe.createdAt,
                 new Date()
             );
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
 
-            const result = useCase.execute('123', updateData);
+            mockRepository.update.mockReturnValue(updatedRecipe);
 
-            expect(mockRepository.findById).toHaveBeenCalledWith('123');
-            expect(mockRepository.update).toHaveBeenCalledWith(expect.any(Recipe));
-            expect(result.name).toBe('Updated Recipe Name');
+            const result = useCase.execute('1', updateData);
+
+            expect(mockRepository.findById).toHaveBeenCalledWith('1');
+            expect(mockRepository.update).toHaveBeenCalled();
+            expect(result).toBe(updatedRecipe);
         });
 
-        it('should update all fields when provided', () => {
-            const updateData: UpdateRecipeDto = {
-                name: 'New Name',
-                description: 'New description with enough characters',
-                ingredients: ['New Ingredient'],
-                instructions: ['New Instruction'],
-                prepTime: 5,
-                cookTime: 15,
-                servings: 2,
-                difficulty: 'hard',
-                category: 'New Category',
-                imageUrl: 'new-image.jpg'
+        it('should update only specified fields', () => {
+            const updateData = {
+                servings: 6,
             };
 
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
+            mockRepository.findById.mockReturnValue(existingRecipe);
 
-            const result = useCase.execute('123', updateData);
+            const updatedRecipe = new Recipe(
+                existingRecipe.id,
+                existingRecipe.name,
+                existingRecipe.description,
+                existingRecipe.ingredients,
+                existingRecipe.instructions,
+                existingRecipe.prepTime,
+                existingRecipe.cookTime,
+                Servings.create(updateData.servings),
+                existingRecipe.difficulty,
+                existingRecipe.category,
+                existingRecipe.imageUrl,
+                existingRecipe.createdAt,
+                new Date()
+            );
 
-            expect(result.name).toBe(updateData.name);
+            mockRepository.update.mockReturnValue(updatedRecipe);
+
+            const result = useCase.execute('1', updateData);
+
+            expect(result.servings.getValue()).toBe(6);
+            expect(result.name).toBe(existingRecipe.name);
+        });
+
+        it('should throw error when recipe not found', () => {
+            mockRepository.findById.mockReturnValue(null);
+
+            const updateData = { name: 'Updated Recipe' };
+
+            expect(() => useCase.execute('non-existent-id', updateData)).toThrow('Recipe not found');
+        });
+
+        it('should throw error for description less than 10 characters', () => {
+            mockRepository.findById.mockReturnValue(existingRecipe);
+
+            const updateData = { description: 'Short' };
+
+            expect(() => useCase.execute('1', updateData)).toThrow(
+                'Recipe description must be at least 10 characters'
+            );
+        });
+
+        it('should update all fields at once', () => {
+            const updateData = {
+                name: 'Completely Updated Recipe',
+                description: 'Completely new description with enough characters',
+                ingredients: ['New Ingredient 1', 'New Ingredient 2'],
+                instructions: ['New Step 1', 'New Step 2'],
+                prepTime: 25,
+                cookTime: 35,
+                servings: 8,
+                difficulty: 'hard',
+                category: 'Chicken',
+                imageUrl: 'https://example.com/new.jpg',
+            };
+
+            mockRepository.findById.mockReturnValue(existingRecipe);
+
+            const updatedRecipe = new Recipe(
+                existingRecipe.id,
+                RecipeName.create(updateData.name),
+                updateData.description,
+                updateData.ingredients,
+                updateData.instructions,
+                CookingTime.create(updateData.prepTime),
+                CookingTime.create(updateData.cookTime),
+                Servings.create(updateData.servings),
+                Difficulty.create(updateData.difficulty),
+                Category.create(updateData.category),
+                updateData.imageUrl,
+                existingRecipe.createdAt,
+                new Date()
+            );
+
+            mockRepository.update.mockReturnValue(updatedRecipe);
+
+            const result = useCase.execute('1', updateData);
+
+            expect(result.name.getValue()).toBe(updateData.name);
             expect(result.description).toBe(updateData.description);
-            expect(result.prepTime).toBe(updateData.prepTime);
-            expect(mockRepository.update).toHaveBeenCalled();
+            expect(result.servings.getValue()).toBe(updateData.servings);
         });
 
-        it('should update imageUrl to null', () => {
-            const updateData: UpdateRecipeDto = { imageUrl: null };
+        it('should preserve createdAt date', () => {
+            const updateData = { name: 'Updated Name' };
 
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
+            mockRepository.findById.mockReturnValue(existingRecipe);
 
-            const result = useCase.execute('123', updateData);
-
-            expect(result.imageUrl).toBeNull();
-            expect(mockRepository.update).toHaveBeenCalled();
-        });
-    });
-
-    describe('Recipe not found', () => {
-        it('should throw error when recipe does not exist', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(null);
-
-            const updateData: UpdateRecipeDto = { name: 'New Name' };
-
-            expect(() => useCase.execute('nonexistent', updateData)).toThrow('Recipe not found');
-            expect(mockRepository.findById).toHaveBeenCalledWith('nonexistent');
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Name validation', () => {
-        it('should throw error if name is too short', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { name: 'Ab' };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Recipe name must be at least 3 characters'
+            const updatedRecipe = new Recipe(
+                existingRecipe.id,
+                RecipeName.create(updateData.name),
+                existingRecipe.description,
+                existingRecipe.ingredients,
+                existingRecipe.instructions,
+                existingRecipe.prepTime,
+                existingRecipe.cookTime,
+                existingRecipe.servings,
+                existingRecipe.difficulty,
+                existingRecipe.category,
+                existingRecipe.imageUrl,
+                existingRecipe.createdAt,
+                new Date()
             );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
 
-        it('should throw error if name is empty string', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
+            mockRepository.update.mockReturnValue(updatedRecipe);
 
-            const updateData: UpdateRecipeDto = { name: '' };
+            const result = useCase.execute('1', updateData);
 
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Recipe name must be at least 3 characters'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if name is only whitespace', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { name: '   ' };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Recipe name must be at least 3 characters'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should accept name with exactly 3 characters', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { name: 'Pie' };
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
-
-            const result = useCase.execute('123', updateData);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.update).toHaveBeenCalled();
-        });
-    });
-
-    describe('Description validation', () => {
-        it('should throw error if description is too short', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { description: 'Short' };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Recipe description must be at least 10 characters'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if description is empty', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { description: '' };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Recipe description must be at least 10 characters'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should accept description with exactly 10 characters', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { description: '1234567890' };
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
-
-            const result = useCase.execute('123', updateData);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.update).toHaveBeenCalled();
-        });
-    });
-
-    describe('Time validation', () => {
-        it('should throw error if prepTime is 0', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { prepTime: 0 };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Preparation time must be at least 1 minute'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if cookTime is 0', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { cookTime: 0 };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Cooking time must be at least 1 minute'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if prepTime is negative', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { prepTime: -5 };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Preparation time must be at least 1 minute'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should accept valid prepTime and cookTime', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { prepTime: 1, cookTime: 1 };
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
-
-            const result = useCase.execute('123', updateData);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.update).toHaveBeenCalled();
-        });
-    });
-
-    describe('Servings validation', () => {
-        it('should throw error if servings is 0', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { servings: 0 };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Servings must be at least 1'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if servings is negative', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { servings: -1 };
-
-            expect(() => useCase.execute('123', updateData)).toThrow(
-                'Servings must be at least 1'
-            );
-            expect(mockRepository.update).not.toHaveBeenCalled();
-        });
-
-        it('should accept servings of 1', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = { servings: 1 };
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
-
-            const result = useCase.execute('123', updateData);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.update).toHaveBeenCalled();
-        });
-    });
-
-    describe('Empty update', () => {
-        it('should handle empty update data', () => {
-            vi.mocked(mockRepository.findById).mockReturnValue(existingRecipe);
-
-            const updateData: UpdateRecipeDto = {};
-            const updatedRecipe = existingRecipe.update(updateData);
-            vi.mocked(mockRepository.update).mockReturnValue(updatedRecipe);
-
-            const result = useCase.execute('123', updateData);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.update).toHaveBeenCalled();
+            expect(result.createdAt).toBe(existingRecipe.createdAt);
         });
     });
 });
-

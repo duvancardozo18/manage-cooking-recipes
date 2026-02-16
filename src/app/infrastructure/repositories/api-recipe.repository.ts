@@ -172,12 +172,18 @@ export class ApiRecipeRepository implements RecipeRepository {
     }
 
     findByCategory(category: string): Recipe[] {
+        if (!category || category.trim() === '') {
+            return this.findAll();
+        }
         return this.recipesCache.filter(r =>
             r.category.getValue().toLowerCase() === category.toLowerCase()
         );
     }
 
     findByDifficulty(difficulty: string): Recipe[] {
+        if (!difficulty || difficulty.trim() === '') {
+            return this.findAll();
+        }
         return this.recipesCache.filter(r =>
             r.difficulty.getValue().toLowerCase() === difficulty.toLowerCase()
         );

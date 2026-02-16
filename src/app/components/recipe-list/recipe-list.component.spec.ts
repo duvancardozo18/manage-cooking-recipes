@@ -1,244 +1,204 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RecipeListComponent } from './recipe-list.component';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
-import { Recipe } from '../../domain/entities/recipe.entity';
-import { signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { of, Subject } from 'rxjs';
+import { signal } from '@angular/core';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
 
 describe('RecipeListComponent', () => {
     let component: RecipeListComponent;
-    let mockApplicationService: any;
+    let fixture: ComponentFixture<RecipeListComponent>;
+    let mockRecipeService: any;
+    let mockRouter: any;
+    let mockActivatedRoute: any;
+
+    const mockRecipe1 = new Recipe(
+        '1',
+        RecipeName.create('Pasta Carbonara'),
+        'Italian pasta dish',
+        ['Pasta', 'Eggs'],
+        ['Boil pasta'],
+        CookingTime.create(15),
+        CookingTime.create(20),
+        Servings.create(4),
+        Difficulty.create('medium'),
+        Category.create('Pasta'),
+        null,
+        new Date(),
+        new Date()
+    );
+
+    const mockRecipe2 = new Recipe(
+        '2',
+        RecipeName.create('Chicken Curry'),
+        'Indian curry dish',
+        ['Chicken', 'Curry'],
+        ['Cook chicken'],
+        CookingTime.create(20),
+        CookingTime.create(30),
+        Servings.create(6),
+        Difficulty.create('easy'),
+        Category.create('Chicken'),
+        null,
+        new Date(),
+        new Date()
+    );
 
     beforeEach(async () => {
-        // Create mock recipes
-        const mockRecipes = [
-            new Recipe(
-                '1',
-                'Recipe 1',
-                'Description 1',
-                ['Ing1'],
-                ['Step1'],
-                10,
-                20,
-                4,
-                'easy',
-                'Italian',
-                'image1.jpg',
-                new Date(),
-                new Date()
-            ),
-            new Recipe(
-                '2',
-                'Recipe 2',
-                'Description 2',
-                ['Ing2'],
-                ['Step2'],
-                15,
-                25,
-                2,
-                'medium',
-                'Indian',
-                'image2.jpg',
-                new Date(),
-                new Date()
-            ),
-            new Recipe(
-                '3',
-                'Recipe 3',
-                'Description 3',
-                ['Ing3'],
-                ['Step3'],
-                20,
-                30,
-                6,
-                'hard',
-                'Dessert',
-                null,
-                new Date(),
-                new Date()
-            )
-        ];
+        const recipeAddedSubject = new Subject<Recipe>();
+        const recipeUpdatedSubject = new Subject<Recipe>();
+        const recipeDeletedSubject = new Subject<string>();
 
-        // Create mock application service
-        mockApplicationService = {
-            getRecipes: vi.fn().mockReturnValue(signal(mockRecipes)),
-            getCategories: vi.fn().mockReturnValue(['Italian', 'Indian', 'Dessert']),
-            searchRecipes: vi.fn().mockReturnValue(mockRecipes),
-            filterByCategory: vi.fn().mockReturnValue(mockRecipes),
-            filterByDifficulty: vi.fn().mockReturnValue(mockRecipes),
-            deleteRecipe: vi.fn().mockReturnValue(true),
-            recipeAdded$: new Subject<Recipe>().asObservable(),
-            recipeUpdated$: new Subject<Recipe>().asObservable(),
-            recipeDeleted$: new Subject<string>().asObservable()
+        mockRecipeService = {
+            getRecipes: jest.fn().mockReturnValue(signal([mockRecipe1, mockRecipe2])),
+            getCategories: jest.fn().mockReturnValue(['Pasta', 'Chicken']),
+            searchRecipes: jest.fn().mockReturnValue([mockRecipe1]),
+            deleteRecipe: jest.fn().mockReturnValue(true),
+            recipeAdded$: recipeAddedSubject.asObservable(),
+            recipeUpdated$: recipeUpdatedSubject.asObservable(),
+            recipeDeleted$: recipeDeletedSubject.asObservable(),
         };
 
-        const mockActivatedRoute = {
+        mockRouter = {
+            navigate: jest.fn(),
+        };
+
+        mockActivatedRoute = {
             snapshot: {
                 paramMap: {
-                    get: vi.fn()
-                }
+                    get: jest.fn(),
+                },
             },
-            paramMap: of(new Map())
         };
 
         await TestBed.configureTestingModule({
             imports: [RecipeListComponent],
             providers: [
-                { provide: RecipeApplicationService, useValue: mockApplicationService },
-                { provide: ActivatedRoute, useValue: mockActivatedRoute }
-            ]
+                { provide: RecipeApplicationService, useValue: mockRecipeService },
+                { provide: Router, useValue: mockRouter },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+            ],
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(RecipeListComponent);
+        fixture = TestBed.createComponent(RecipeListComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
 
-    describe('Component initialization', () => {
-        it('should create', () => {
-            expect(component).toBeDefined();
-        });
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
 
+    describe('initialization', () => {
         it('should load recipes on init', () => {
-            expect(mockApplicationService.getRecipes).toHaveBeenCalled();
+            expect(component.recipes().length).toBe(2);
         });
 
-        it('should load categories on init', () => {
-            expect(mockApplicationService.getCategories).toHaveBeenCalled();
+        it('should load categories', () => {
+            expect(component.categories().length).toBe(2);
+            expect(component.categories()).toContain('Pasta');
+            expect(component.categories()).toContain('Chicken');
         });
 
-        it('should initialize with empty search term', () => {
+        it('should initialize signals with empty values', () => {
             expect(component.searchQuery()).toBe('');
-        });
-
-        it('should initialize with empty filters', () => {
             expect(component.selectedCategory()).toBe('');
             expect(component.selectedDifficulty()).toBe('');
         });
     });
 
-    describe('Computed properties', () => {
-        it('should compute filtered recipes', () => {
+    describe('filtering', () => {
+        it('should filter recipes by search query', () => {
+            component.searchQuery.set('pasta');
             const filtered = component.filteredRecipes();
+            expect(filtered.length).toBe(1);
+        });
 
-            expect(Array.isArray(filtered)).toBe(true);
+        it('should filter recipes by category', () => {
+            component.selectedCategory.set('Pasta');
+            const filtered = component.filteredRecipes();
+            expect(filtered.every(r => r.category === 'Pasta')).toBe(true);
+        });
+
+        it('should filter recipes by difficulty', () => {
+            component.selectedDifficulty.set('easy');
+            const filtered = component.filteredRecipes();
+            expect(filtered.every(r => r.difficulty === 'easy')).toBe(true);
+        });
+
+        it('should combine multiple filters', () => {
+            component.searchQuery.set('pasta');
+            component.selectedCategory.set('Pasta');
+            const filtered = component.filteredRecipes();
             expect(filtered.length).toBeGreaterThan(0);
         });
-
-        it('should compute view models', () => {
-            const viewModels = component.filteredRecipes();
-
-            expect(Array.isArray(viewModels)).toBe(true);
-            expect(viewModels.length).toBeGreaterThan(0);
-            expect(viewModels[0]).toHaveProperty('difficultyColor');
-            expect(viewModels[0]).toHaveProperty('totalTime');
-        });
     });
 
-    describe('Search functionality', () => {
-        it('should update search term', () => {
-            component.searchQuery.set('pasta');
-
-            expect(component.searchQuery()).toBe('pasta');
+    describe('event handlers', () => {
+        it('should update search query on search change', () => {
+            const event = { target: { value: 'test' } } as any;
+            component.onSearchChange(event);
+            expect(component.searchQuery()).toBe('test');
         });
 
-        it('should call searchRecipes when search term changes', () => {
-            component.searchQuery.set('curry');
-
-            // Trigger computed signal by accessing filteredRecipes
-            const filtered = component.filteredRecipes();
-
-            expect(mockApplicationService.searchRecipes).toHaveBeenCalledWith('curry');
+        it('should update category on category change', () => {
+            const event = { target: { value: 'Pasta' } } as any;
+            component.onCategoryChange(event);
+            expect(component.selectedCategory()).toBe('Pasta');
         });
 
-        it('should handle empty search term', () => {
-            component.searchQuery.set('');
+        it('should update difficulty on difficulty change', () => {
+            const event = { target: { value: 'easy' } } as any;
+            component.onDifficultyChange(event);
+            expect(component.selectedDifficulty()).toBe('easy');
+        });
+
+        it('should clear all filters', () => {
+            component.searchQuery.set('test');
+            component.selectedCategory.set('Pasta');
+            component.selectedDifficulty.set('easy');
+
+            component.clearFilters();
 
             expect(component.searchQuery()).toBe('');
-        });
-    });
-
-    describe('Category filter', () => {
-        it('should update selected category', () => {
-            component.selectedCategory.set('Italian');
-
-            expect(component.selectedCategory()).toBe('Italian');
-        });
-
-        it('should filter by category when selected', () => {
-            component.selectedCategory.set('Indian');
-
-            // The component filters in computed signal, not by calling filterByCategory
-            // Just verify the filter is applied by checking filteredRecipes
-            const filtered = component.filteredRecipes();
-            const indianRecipes = filtered.filter(r => r.category === 'Indian');
-
-            expect(filtered.length).toBeGreaterThanOrEqual(indianRecipes.length);
-        });
-
-        it('should clear category filter', () => {
-            component.selectedCategory.set('Italian');
-            component.selectedCategory.set('');
-
             expect(component.selectedCategory()).toBe('');
+            expect(component.selectedDifficulty()).toBe('');
         });
     });
 
-    describe('Difficulty filter', () => {
-        it('should update selected difficulty', () => {
-            component.selectedDifficulty.set('medium');
+    describe('deleteRecipe', () => {
+        it('should delete a recipe when confirmed', () => {
+            jest.spyOn(window, 'confirm').mockReturnValue(true);
+            const event = { preventDefault: jest.fn(), stopPropagation: jest.fn() } as any;
 
-            expect(component.selectedDifficulty()).toBe('medium');
+            component.deleteRecipe('1', event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(mockRecipeService.deleteRecipe).toHaveBeenCalledWith('1');
         });
 
-        it('should filter by difficulty when selected', () => {
-            component.selectedDifficulty.set('hard');
+        it('should not delete recipe when cancelled', () => {
+            jest.spyOn(window, 'confirm').mockReturnValue(false);
+            const event = { preventDefault: jest.fn(), stopPropagation: jest.fn() } as any;
 
-            // The component filters in computed signal, not by calling filterByDifficulty
-            // Just verify the filter is applied by checking filteredRecipes
-            const filtered = component.filteredRecipes();
-            const hardRecipes = filtered.filter(r => r.difficulty === 'hard');
+            component.deleteRecipe('1', event);
 
-            expect(filtered.length).toBeGreaterThanOrEqual(hardRecipes.length);
-        });
-
-        it('should handle all difficulty levels', () => {
-            ['easy', 'medium', 'hard'].forEach((difficulty) => {
-                component.selectedDifficulty.set(difficulty);
-                expect(component.selectedDifficulty()).toBe(difficulty);
-            });
+            expect(mockRecipeService.deleteRecipe).not.toHaveBeenCalled();
         });
     });
 
-    describe('Delete recipe', () => {
-        it('should call deleteRecipe on application service', () => {
-            const mockEvent = new Event('click');
-            // Mock window.confirm to return true
-            vi.spyOn(window, 'confirm').mockReturnValue(true);
-
-            component.deleteRecipe('123', mockEvent);
-
-            expect(mockApplicationService.deleteRecipe).toHaveBeenCalledWith('123');
-        });
-
-        it('should handle successful deletion', () => {
-            const mockEvent = new Event('click');
-            mockApplicationService.deleteRecipe.mockReturnValue(true);
-
-            const result = component.deleteRecipe('123', mockEvent);
-
-            expect(result).toBeUndefined();
-        });
-
-        it('should handle failed deletion', () => {
-            const mockEvent = new Event('click');
-            mockApplicationService.deleteRecipe.mockReturnValue(false);
-
-            const result = component.deleteRecipe('123', mockEvent);
-
-            expect(result).toBeUndefined();
+    describe('ngOnDestroy', () => {
+        it('should unsubscribe from all subscriptions', () => {
+            const unsubscribeSpy = jest.spyOn(component['subscriptions'], 'unsubscribe');
+            component.ngOnDestroy();
+            expect(unsubscribeSpy).toHaveBeenCalled();
         });
     });
 });

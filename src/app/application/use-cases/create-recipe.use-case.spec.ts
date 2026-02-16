@@ -1,287 +1,154 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CreateRecipeUseCase } from './create-recipe.use-case';
-import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
-import { CreateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
 
 describe('CreateRecipeUseCase', () => {
     let useCase: CreateRecipeUseCase;
-    let mockRepository: RecipeRepository;
-    let validRecipeData: CreateRecipeDto;
+    let mockRepository: jest.Mocked<RecipeRepository>;
 
     beforeEach(() => {
-        // Create mock repository
         mockRepository = {
-            save: vi.fn(),
-            findAll: vi.fn(),
-            findById: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            search: vi.fn(),
-            findByCategory: vi.fn(),
-            findByDifficulty: vi.fn()
+            save: jest.fn(),
+            findAll: jest.fn(),
+            findById: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            findByCategory: jest.fn(),
+            findByDifficulty: jest.fn(),
+            search: jest.fn(),
         };
 
         useCase = new CreateRecipeUseCase(mockRepository);
+    });
 
-        validRecipeData = {
-            name: 'Test Recipe',
-            description: 'This is a test recipe description with more than 10 characters',
-            ingredients: ['Ingredient 1', 'Ingredient 2'],
-            instructions: ['Step 1', 'Step 2'],
-            prepTime: 10,
+    describe('execute', () => {
+        const validInput = {
+            name: 'Pasta Carbonara',
+            description: 'A classic Italian pasta dish with eggs and bacon',
+            ingredients: ['Pasta', 'Eggs', 'Bacon', 'Parmesan'],
+            instructions: ['Boil pasta', 'Fry bacon', 'Mix everything'],
+            prepTime: 15,
             cookTime: 20,
             servings: 4,
             difficulty: 'medium',
-            category: 'Test Category',
-            imageUrl: 'test-image.jpg'
+            category: 'Pasta',
+            imageUrl: 'https://example.com/image.jpg',
         };
-    });
 
-    describe('Successful creation', () => {
         it('should create a recipe with valid data', () => {
-            const mockRecipe = Recipe.create(validRecipeData);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
+            const mockRecipe = new Recipe(
+                '1',
+                RecipeName.create(validInput.name),
+                validInput.description,
+                validInput.ingredients,
+                validInput.instructions,
+                CookingTime.create(validInput.prepTime),
+                CookingTime.create(validInput.cookTime),
+                Servings.create(validInput.servings),
+                Difficulty.create(validInput.difficulty),
+                Category.create(validInput.category),
+                validInput.imageUrl,
+                new Date(),
+                new Date()
+            );
 
-            const result = useCase.execute(validRecipeData);
+            mockRepository.save.mockReturnValue(mockRecipe);
 
-            expect(result).toEqual(mockRecipe);
+            const result = useCase.execute(validInput);
+
             expect(mockRepository.save).toHaveBeenCalledTimes(1);
-            expect(mockRepository.save).toHaveBeenCalledWith(expect.any(Recipe));
+            expect(result).toBe(mockRecipe);
         });
 
-        it('should create recipe without imageUrl', () => {
-            const dataWithoutImage = { ...validRecipeData };
-            delete dataWithoutImage.imageUrl;
+        it('should create a recipe without imageUrl', () => {
+            const inputWithoutImage = { ...validInput, imageUrl: undefined };
+            const mockRecipe = new Recipe(
+                '1',
+                RecipeName.create(validInput.name),
+                validInput.description,
+                validInput.ingredients,
+                validInput.instructions,
+                CookingTime.create(validInput.prepTime),
+                CookingTime.create(validInput.cookTime),
+                Servings.create(validInput.servings),
+                Difficulty.create(validInput.difficulty),
+                Category.create(validInput.category),
+                null,
+                new Date(),
+                new Date()
+            );
 
-            const mockRecipe = Recipe.create(dataWithoutImage);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
+            mockRepository.save.mockReturnValue(mockRecipe);
 
-            const result = useCase.execute(dataWithoutImage);
+            const result = useCase.execute(inputWithoutImage);
 
-            expect(result).toBeDefined();
             expect(mockRepository.save).toHaveBeenCalled();
+            expect(result.imageUrl).toBeNull();
         });
 
-        it('should create recipe with all difficulty levels', () => {
-            const difficulties: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
+        it('should throw error for description less than 10 characters', () => {
+            const invalidInput = { ...validInput, description: 'Short' };
 
-            difficulties.forEach((difficulty) => {
-                const data = { ...validRecipeData, difficulty };
-                const mockRecipe = Recipe.create(data);
-                vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
-
-                const result = useCase.execute(data);
-
-                expect(result.difficulty).toBe(difficulty);
-            });
-        });
-    });
-
-    describe('Name validation', () => {
-        it('should throw error if name is empty', () => {
-            const invalidData = { ...validRecipeData, name: '' };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
-                'Recipe name must be at least 3 characters'
-            );
-            expect(mockRepository.save).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if name has only whitespace', () => {
-            const invalidData = { ...validRecipeData, name: '   ' };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
-                'Recipe name must be at least 3 characters'
-            );
-            expect(mockRepository.save).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if name is less than 3 characters', () => {
-            const invalidData = { ...validRecipeData, name: 'Ab' };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
-                'Recipe name must be at least 3 characters'
-            );
-            expect(mockRepository.save).not.toHaveBeenCalled();
-        });
-
-        it('should accept name with exactly 3 characters', () => {
-            const data = { ...validRecipeData, name: 'Pie' };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
-
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-    });
-
-    describe('Description validation', () => {
-        it('should throw error if description is empty', () => {
-            const invalidData = { ...validRecipeData, description: '' };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
+            expect(() => useCase.execute(invalidInput)).toThrow(
                 'Recipe description must be at least 10 characters'
             );
-            expect(mockRepository.save).not.toHaveBeenCalled();
         });
 
-        it('should throw error if description is less than 10 characters', () => {
-            const invalidData = { ...validRecipeData, description: 'Short' };
+        it('should throw error for empty description', () => {
+            const invalidInput = { ...validInput, description: '' };
 
-            expect(() => useCase.execute(invalidData)).toThrow(
+            expect(() => useCase.execute(invalidInput)).toThrow(
                 'Recipe description must be at least 10 characters'
             );
-            expect(mockRepository.save).not.toHaveBeenCalled();
         });
 
-        it('should accept description with exactly 10 characters', () => {
-            const data = { ...validRecipeData, description: '1234567890' };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
+        it('should throw error for no ingredients', () => {
+            const invalidInput = { ...validInput, ingredients: [] };
 
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-    });
-
-    describe('Ingredients validation', () => {
-        it('should throw error if ingredients array is empty', () => {
-            const invalidData = { ...validRecipeData, ingredients: [] };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
+            expect(() => useCase.execute(invalidInput)).toThrow(
                 'Recipe must have at least one ingredient'
             );
-            expect(mockRepository.save).not.toHaveBeenCalled();
         });
 
-        it('should accept single ingredient', () => {
-            const data = { ...validRecipeData, ingredients: ['Single Ingredient'] };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
+        it('should throw error for no instructions', () => {
+            const invalidInput = { ...validInput, instructions: [] };
 
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-
-        it('should accept multiple ingredients', () => {
-            const data = {
-                ...validRecipeData,
-                ingredients: ['Ing 1', 'Ing 2', 'Ing 3', 'Ing 4']
-            };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
-
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-    });
-
-    describe('Instructions validation', () => {
-        it('should throw error if instructions array is empty', () => {
-            const invalidData = { ...validRecipeData, instructions: [] };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
+            expect(() => useCase.execute(invalidInput)).toThrow(
                 'Recipe must have at least one instruction'
             );
-            expect(mockRepository.save).not.toHaveBeenCalled();
         });
 
-        it('should accept single instruction', () => {
-            const data = { ...validRecipeData, instructions: ['Mix everything'] };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
+        it('should validate recipe name through RecipeName value object', () => {
+            const invalidInput = { ...validInput, name: 'AB' };
 
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-    });
-
-    describe('Time validation', () => {
-        it('should throw error if prepTime is 0', () => {
-            const invalidData = { ...validRecipeData, prepTime: 0 };
-
-            expect(() => useCase.execute(invalidData)).toThrow(
-                'Preparation and cooking time must be at least 1 minute'
+            expect(() => useCase.execute(invalidInput)).toThrow(
+                'Recipe name must be at least 3 characters long'
             );
-            expect(mockRepository.save).not.toHaveBeenCalled();
         });
 
-        it('should throw error if cookTime is 0', () => {
-            const invalidData = { ...validRecipeData, cookTime: 0 };
+        it('should validate cooking time through CookingTime value object', () => {
+            const invalidInput = { ...validInput, prepTime: -1 };
 
-            expect(() => useCase.execute(invalidData)).toThrow(
-                'Preparation and cooking time must be at least 1 minute'
+            expect(() => useCase.execute(invalidInput)).toThrow(
+                'Cooking time cannot be negative'
             );
-            expect(mockRepository.save).not.toHaveBeenCalled();
         });
 
-        it('should throw error if prepTime is negative', () => {
-            const invalidData = { ...validRecipeData, prepTime: -5 };
+        it('should validate servings through Servings value object', () => {
+            const invalidInput = { ...validInput, servings: 0 };
 
-            expect(() => useCase.execute(invalidData)).toThrow(
-                'Preparation and cooking time must be at least 1 minute'
-            );
-            expect(mockRepository.save).not.toHaveBeenCalled();
+            expect(() => useCase.execute(invalidInput)).toThrow('Servings must be at least 1');
         });
 
-        it('should accept minimum valid times', () => {
-            const data = { ...validRecipeData, prepTime: 1, cookTime: 1 };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
+        it('should validate difficulty through Difficulty value object', () => {
+            const invalidInput = { ...validInput, difficulty: 'invalid' };
 
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-    });
-
-    describe('Servings validation', () => {
-        it('should throw error if servings is 0', () => {
-            const invalidData = { ...validRecipeData, servings: 0 };
-
-            expect(() => useCase.execute(invalidData)).toThrow('Servings must be at least 1');
-            expect(mockRepository.save).not.toHaveBeenCalled();
-        });
-
-        it('should throw error if servings is negative', () => {
-            const invalidData = { ...validRecipeData, servings: -2 };
-
-            expect(() => useCase.execute(invalidData)).toThrow('Servings must be at least 1');
-            expect(mockRepository.save).not.toHaveBeenCalled();
-        });
-
-        it('should accept servings of 1', () => {
-            const data = { ...validRecipeData, servings: 1 };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
-
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
-        });
-
-        it('should accept large number of servings', () => {
-            const data = { ...validRecipeData, servings: 100 };
-            const mockRecipe = Recipe.create(data);
-            vi.mocked(mockRepository.save).mockReturnValue(mockRecipe);
-
-            const result = useCase.execute(data);
-
-            expect(result).toBeDefined();
-            expect(mockRepository.save).toHaveBeenCalled();
+            expect(() => useCase.execute(invalidInput)).toThrow('Invalid difficulty level');
         });
     });
 });

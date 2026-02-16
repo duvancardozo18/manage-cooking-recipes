@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DifficultyLevel } from '../domain/value-objects/difficulty.value-object';
+import { DifficultyLevel } from '../../domain/value-objects/difficulty.value-object';
 
 @Pipe({
     name: 'difficulty',
