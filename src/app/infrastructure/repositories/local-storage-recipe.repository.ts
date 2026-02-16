@@ -133,7 +133,7 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
                 cookTime: 20,
                 servings: 4,
                 difficulty: 'easy',
-                category: 'Española',
+                category: 'Breakfast',
                 imageUrl: 'https://images.unsplash.com/photo-1606923829579-0cb981a83e2e?w=800',
                 createdAt: new Date(),
                 updatedAt: new Date()
@@ -160,7 +160,7 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
                 cookTime: 18,
                 servings: 4,
                 difficulty: 'easy',
-                category: 'Básica',
+                category: 'Vegetarian',
                 imageUrl: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800',
                 createdAt: new Date(),
                 updatedAt: new Date()
@@ -187,7 +187,7 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
                 cookTime: 3,
                 servings: 2,
                 difficulty: 'easy',
-                category: 'Desayuno',
+                category: 'Breakfast',
                 imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800',
                 createdAt: new Date(),
                 updatedAt: new Date()

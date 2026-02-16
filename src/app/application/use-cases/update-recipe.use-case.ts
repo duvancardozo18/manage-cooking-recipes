@@ -17,7 +17,7 @@ export class UpdateRecipeUseCase {
             throw new Error('Recipe not found');
         }
 
-        if (data.description !== undefined && data.description.trim().length < 10) {
+        if (data.description !== undefined && typeof data.description === 'string' && data.description.trim().length < 10) {
             throw new Error('Recipe description must be at least 10 characters');
         }
 

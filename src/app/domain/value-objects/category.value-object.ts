@@ -51,6 +51,10 @@ export class Category {
             throw new Error('Category cannot be empty');
         }
 
+        if (typeof value !== 'string') {
+            throw new Error('Category must be a string');
+        }
+
         // Allow any category value for flexibility, but normalize known ones
         const normalized = this.normalizeCategory(trimmed);
         return new Category(normalized);
@@ -65,7 +69,7 @@ export class Category {
     }
 
     static isValid(value: string): boolean {
-        return !!value && value.trim().length > 0;
+        return !!value && typeof value === 'string' && value.trim().length > 0;
     }
 
     getValue(): string {

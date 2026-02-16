@@ -12,7 +12,7 @@ export class CreateRecipeUseCase {
 
     execute(data: CreateRecipeInput): Recipe {
 
-        if (!data.description || data.description.trim().length < 10) {
+        if (!data.description || typeof data.description !== 'string' || data.description.trim().length < 10) {
             throw new Error('Recipe description must be at least 10 characters');
         }
 

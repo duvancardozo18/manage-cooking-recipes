@@ -4,6 +4,10 @@ export class Difficulty {
     private constructor(private readonly value: DifficultyLevel) { }
 
     static create(value: string): Difficulty {
+        if (typeof value !== 'string') {
+            throw new Error('Difficulty must be a string');
+        }
+
         if (!this.isValid(value)) {
             throw new Error(`Invalid difficulty level: ${value}. Must be 'easy', 'medium', or 'hard'`);
         }
@@ -11,7 +15,7 @@ export class Difficulty {
     }
 
     static isValid(value: string): boolean {
-        return ['easy', 'medium', 'hard'].includes(value);
+        return typeof value === 'string' && ['easy', 'medium', 'hard'].includes(value);
     }
 
     getValue(): DifficultyLevel {

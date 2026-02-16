@@ -5,6 +5,10 @@ export class Servings {
     private constructor(private readonly value: number) { }
 
     static create(value: number): Servings {
+        if (typeof value !== 'number' || isNaN(value)) {
+            throw new Error('Servings must be a valid number');
+        }
+
         if (value < this.MIN_SERVINGS) {
             throw new Error(`Servings must be at least ${this.MIN_SERVINGS}`);
         }

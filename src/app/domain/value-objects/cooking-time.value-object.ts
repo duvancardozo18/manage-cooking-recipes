@@ -5,6 +5,10 @@ export class CookingTime {
     private constructor(private readonly minutes: number) { }
 
     static create(minutes: number): CookingTime {
+        if (typeof minutes !== 'number' || isNaN(minutes)) {
+            throw new Error('Cooking time must be a valid number');
+        }
+
         if (minutes < this.MIN_TIME) {
             throw new Error('Cooking time cannot be negative');
         }

@@ -11,6 +11,10 @@ export class RecipeName {
             throw new Error('Recipe name cannot be empty');
         }
 
+        if (typeof value !== 'string') {
+            throw new Error('Recipe name must be a string');
+        }
+
         if (trimmed.length < this.MIN_LENGTH) {
             throw new Error(`Recipe name must be at least ${this.MIN_LENGTH} characters long`);
         }

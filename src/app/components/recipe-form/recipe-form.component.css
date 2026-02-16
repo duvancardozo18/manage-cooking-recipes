@@ -17,6 +17,24 @@
     margin: 0;
 }
 
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.alert-error {
+    background-color: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.alert strong {
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
 .recipe-form {
     background: white;
     border-radius: 12px;
@@ -210,6 +228,20 @@
 
 .btn-remove:hover {
     background: #fecaca;
+}
+
+.form-footer {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.required-note {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0;
+    font-style: italic;
 }
 
 @media (max-width: 768px) {

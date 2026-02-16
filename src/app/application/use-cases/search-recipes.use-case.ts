@@ -5,7 +5,7 @@ export class SearchRecipesUseCase {
     constructor(private repository: RecipeRepository) { }
 
     execute(query: string): Recipe[] {
-        if (!query || query.trim().length === 0) {
+        if (!query || typeof query !== 'string' || query.trim().length === 0) {
             return this.repository.findAll();
         }
 
