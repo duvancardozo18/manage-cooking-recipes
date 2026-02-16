@@ -1,59 +1,78 @@
-# ManageCookingRecipes
+# Aplicación de Gestión de Recetas
+## Estructura del Proyecto (clean architecture)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.3.
-
-## Development server
-
-To start a local development server, run:
-
-```bash
-ng serve
+```
+src/app/
+├── domain/                          # Capa de Dominio (Entities & 
+Business Rules)
+│   ├── entities/
+│   │   └── recipe.entity.ts        # Entidad Recipe como clase con lógica de negocio
+│   ├── repositories/
+│   │   └── recipe.repository.ts    # Interfaz del repositorio (Port)
+│   └── use-cases/                   # Casos de uso (Application Business Rules)
+│       ├── create-recipe.use-case.ts
+│       ├── update-recipe.use-case.ts
+│       ├── delete-recipe.use-case.ts
+│       ├── get-all-recipes.use-case.ts
+│       ├── get-recipe-by-id.use-case.ts
+│       └── search-recipes.use-case.ts
+│
+├── application/                     # Capa de Aplicación (Application Services)
+│   └── services/
+│       └── recipe-application.service.ts  # Servicio que orquesta casos de uso
+│
+├── infrastructure/                  # Capa de Infraestructura (Adapters)
+│   └── repositories/
+│       └── local-storage-recipe.repository.ts  # Implementación concreta (Adapter)
+│
+├── presentation/                    # Capa de Presentación (UI)
+│   └── view-models/
+│       └── recipe.view-model.ts    # ViewModels para la vista
+│
+├── components/                      # Componentes Angular (UI)
+│   ├── recipe-list/
+│   ├── recipe-detail/
+│   └── recipe-form/
+│
+└── core/                           # Configuración y tokens
+    └── tokens/
+        └── repository.tokens.ts    # InjectionTokens para DI
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-## Code scaffolding
+## 🔄 Flujo de Datos
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Caso de uso: Crear una receta
 
-```bash
-ng generate component component-name
+```
+1. Usuario completa formulario
+   ↓
+2. RecipeFormComponent valida datos
+   ↓
+3. Llama a RecipeApplicationService.createRecipe()
+   ↓
+4. Application Service ejecuta CreateRecipeUseCase
+   ↓
+5. Use Case valida reglas de negocio
+   ↓
+6. Use Case crea entidad Recipe
+   ↓
+7. Use Case persiste via RecipeRepository (interfaz)
+   ↓
+8. LocalStorageRecipeRepository guarda en localStorage
+   ↓
+9. Entidad Recipe retorna al componente
+   ↓
+10. Componente navega a la vista de detalle
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+
+## 🐳 Docker
+
+### Construir y Ejecutar con Docker Compose
 
 ```bash
-ng generate --help
+docker-compose up -d
 ```
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+La aplicación estará disponible en `http://localhost:8080`
