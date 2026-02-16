@@ -33,9 +33,14 @@ src/app/
 │       └── api-recipe.repository.ts            # Impl. con API REST
 │
 ├── presentation/          # Capa de Presentación (UI)
-│   └── view-models/
-│       ├── recipe.view-model.ts    # ViewModels para la vista
-│       └── recipe.view-model.spec.ts
+│   ├── view-models/
+│   │   ├── recipe.view-model.ts    
+│   │   └── recipe.view-model.spec.ts
+│   └── pipes/             # Pipes de
+│       ├── cooking-time.pipe.ts       
+│       ├── cooking-time.pipe.spec.ts
+│       ├── difficulty.pipe.ts          
+│       └── difficulty.pipe.spec.ts
 │
 ├── components/             # Componentes Angular (UI)
 │   ├── recipe-list/
@@ -54,18 +59,12 @@ src/app/
 │       ├── recipe-form.component.css
 │       └── recipe-form.component.spec.ts
 │
-├── pipes/                 # Pipes de Angular
-│   ├── cooking-time.pipe.ts       
-│   ├── cooking-time.pipe.spec.ts
-│   ├── difficulty.pipe.ts          
-│   └── difficulty.pipe.spec.ts
-│
 ├── models/                 # Modelos, trasf. de datos
 │   └── recipe.model.ts            
 │
-└── core/                   # Configuración y tokens
-    └── tokens/
-        └── repository.tokens.ts    # InjectionTokens para DI
+└── core/                   # Configuración y providers
+    └── providers/
+        └── repository.providers.ts  # DI
 ```
 
 

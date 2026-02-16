@@ -4,8 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { RecipeViewModel, RecipeViewModelMapper } from '../../presentation/view-models/recipe.view-model';
-import { CookingTimePipe } from '../../pipes/cooking-time.pipe';
-import { DifficultyPipe } from '../../pipes/difficulty.pipe';
+import { CookingTimePipe } from '../../presentation/pipes/cooking-time.pipe';
+import { DifficultyPipe } from '../../presentation/pipes/difficulty.pipe';
 
 @Component({
     selector: 'app-recipe-detail',

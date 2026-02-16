@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { RecipeViewModel, RecipeViewModelMapper } from '../../presentation/view-models/recipe.view-model';
-import { DifficultyPipe } from '../../pipes/difficulty.pipe';
+import { DifficultyPipe } from '../../presentation/pipes/difficulty.pipe';
 
 @Component({
     selector: 'app-recipe-list',

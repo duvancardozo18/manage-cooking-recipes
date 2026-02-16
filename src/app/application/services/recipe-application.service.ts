@@ -9,7 +9,7 @@ import { GetAllRecipesUseCase } from '../use-cases/get-all-recipes.use-case';
 import { GetRecipeByIdUseCase } from '../use-cases/get-recipe-by-id.use-case';
 import { SearchRecipesUseCase } from '../use-cases/search-recipes.use-case';
 import { UpdateRecipeUseCase } from '../use-cases/update-recipe.use-case';
-import { RECIPE_REPOSITORY } from '../../core/tokens/repository.tokens';
+import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
 
 
 @Injectable({
