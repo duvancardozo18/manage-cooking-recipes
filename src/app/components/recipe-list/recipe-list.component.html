@@ -1,0 +1,97 @@
+<div class="recipe-list-container">
+    <!-- Observer Pattern: Banner de notificación -->
+    @if (notificationMessage()) {
+    <div class="notification-banner">
+        <span>{{ notificationMessage() }}</span>
+    </div>
+    }
+
+    <header class="header">
+        <h1>Mis Recetas</h1>
+        <button class="btn btn-primary" routerLink="/recipes/new">
+            <span class="icon">+</span> Agregar Receta
+        </button>
+    </header>
+
+    <div class="filters">
+        <div class="search-box">
+            <input type="text" [value]="searchQuery()" (input)="onSearchChange($event)" placeholder="Buscar recetas..."
+                class="search-input" />
+        </div>
+
+        <div class="filter-group">
+            <select [value]="selectedCategory()" (change)="onCategoryChange($event)" class="filter-select">
+                <option value="">Todas las categorías</option>
+                @for (category of categories(); track category) {
+                <option [value]="category">{{ category }}</option>
+                }
+            </select>
+
+            <select [value]="selectedDifficulty()" (change)="onDifficultyChange($event)" class="filter-select">
+                <option value="">Todas las dificultades</option>
+                <option value="easy">Fácil</option>
+                <option value="medium">Media</option>
+                <option value="hard">Difícil</option>
+            </select>
+
+            @if (searchQuery() || selectedCategory() || selectedDifficulty()) {
+            <button (click)="clearFilters()" class="btn btn-secondary">Limpiar Filtros</button>
+            }
+        </div>
+    </div>
+
+    <div class="results-info">
+        <p>{{ filteredRecipes().length }} receta(s) encontrada(s)</p>
+    </div>
+
+    @if (filteredRecipes().length === 0) {
+    <div class="empty-state">
+        <p>No se encontraron recetas. ¡Intenta ajustar tus filtros o agrega una nueva receta!</p>
+    </div>
+    } @else {
+    <div class="recipe-grid">
+        @for (recipe of filteredRecipes(); track recipe.id) {
+        <div class="recipe-card" [routerLink]="['/recipes', recipe.id]">
+            <div class="recipe-image">
+                @if (recipe.imageUrl) {
+                <img [src]="recipe.imageUrl" [alt]="recipe.name" />
+                } @else {
+                <div class="no-image"></div>
+                }
+                <span class="difficulty-badge" [style.background-color]="recipe.difficultyColor">
+                    {{ recipe.difficulty | difficulty }}
+                </span>
+            </div>
+
+            <div class="recipe-content">
+                <h3 class="recipe-title">{{ recipe.name }}</h3>
+                <p class="recipe-description">{{ recipe.description }}</p>
+
+                <div class="recipe-meta">
+                    <span class="meta-item">
+
+                        {{ recipe.category }}
+                    </span>
+                    <span class="meta-item">
+                        {{ getTotalTime(recipe) }} min
+                    </span>
+                    <span class="meta-item">
+                        {{ recipe.servings }} porciones
+                    </span>
+                </div>
+
+                <div class="recipe-actions">
+                    <button [routerLink]="['/recipes', recipe.id, 'edit']" class="btn btn-edit"
+                        (click)="$event.stopPropagation()">
+                        Editar
+                    </button>
+                    <button (click)="deleteRecipe(recipe.id, $event)" class="btn btn-delete">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    }
+</div>

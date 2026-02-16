@@ -1,0 +1,153 @@
+<div class="recipe-form-container">
+    <div class="form-header">
+        <h1>{{ pageTitle() }}</h1>
+        <button routerLink="/recipes" class="btn btn-secondary">
+            Cancelar
+        </button>
+    </div>
+
+    <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="recipe-form">
+        <!-- Basic Information -->
+        <div class="form-section">
+            <h2 class="section-title">Información Básica</h2>
+
+            <div class="form-group">
+                <label for="name" class="form-label">Nombre de la Receta *</label>
+                <input type="text" id="name" formControlName="name" class="form-input"
+                    [class.error]="isFieldInvalid('name')" placeholder="" />
+                @if (isFieldInvalid('name')) {
+                <span class="error-message">{{ getFieldError('name') }}</span>
+                }
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">Descripción *</label>
+                <textarea id="description" formControlName="description" class="form-textarea"
+                    [class.error]="isFieldInvalid('description')" rows="3"
+                    placeholder=""></textarea>
+                @if (isFieldInvalid('description')) {
+                <span class="error-message">{{ getFieldError('description') }}</span>
+                }
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="category" class="form-label">Categoría *</label>
+                    <input type="text" id="category" formControlName="category" class="form-input"
+                        [class.error]="isFieldInvalid('category')" placeholder="" />
+                    @if (isFieldInvalid('category')) {
+                    <span class="error-message">{{ getFieldError('category') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="difficulty" class="form-label">Dificultad *</label>
+                    <select id="difficulty" formControlName="difficulty" class="form-select">
+                        <option value="easy">Fácil</option>
+                        <option value="medium">Media</option>
+                        <option value="hard">Difícil</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="imageUrl" class="form-label">URL de Imagen (opcional)</label>
+                <input type="url" id="imageUrl" formControlName="imageUrl" class="form-input"
+                    placeholder="" />
+            </div>
+        </div>
+
+        <!-- Time & Servings -->
+        <div class="form-section">
+            <h2 class="section-title">Tiempo y Porciones</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="prepTime" class="form-label">Tiempo de Preparación (minutos) *</label>
+                    <input type="number" id="prepTime" formControlName="prepTime" class="form-input"
+                        [class.error]="isFieldInvalid('prepTime')" min="1" />
+                    @if (isFieldInvalid('prepTime')) {
+                    <span class="error-message">{{ getFieldError('prepTime') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="cookTime" class="form-label">Tiempo de Cocción (minutos) *</label>
+                    <input type="number" id="cookTime" formControlName="cookTime" class="form-input"
+                        [class.error]="isFieldInvalid('cookTime')" min="1" />
+                    @if (isFieldInvalid('cookTime')) {
+                    <span class="error-message">{{ getFieldError('cookTime') }}</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="servings" class="form-label">Porciones *</label>
+                    <input type="number" id="servings" formControlName="servings" class="form-input"
+                        [class.error]="isFieldInvalid('servings')" min="1" />
+                    @if (isFieldInvalid('servings')) {
+                    <span class="error-message">{{ getFieldError('servings') }}</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingredients -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">Ingredientes</h2>
+                <button type="button" (click)="addIngredient()" class="btn btn-add">
+                    + Agregar Ingrediente
+                </button>
+            </div>
+
+            <div formArrayName="ingredients" class="dynamic-list">
+                @for (ingredient of ingredients.controls; track $index) {
+                <div class="dynamic-item">
+                    <input type="text" [formControlName]="$index" class="form-input"
+                        placeholder="" />
+                    @if (ingredients.length > 1) {
+                    <button type="button" (click)="removeIngredient($index)" class="btn btn-remove">
+                        ×
+                    </button>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">Instrucciones</h2>
+                <button type="button" (click)="addInstruction()" class="btn btn-add">
+                    + Agregar Paso
+                </button>
+            </div>
+
+            <div formArrayName="instructions" class="dynamic-list">
+                @for (instruction of instructions.controls; track $index) {
+                <div class="dynamic-item">
+                    <span class="step-number">{{ $index + 1 }}</span>
+                    <textarea [formControlName]="$index" class="form-textarea" rows="2"
+                        placeholder=""></textarea>
+                    @if (instructions.length > 1) {
+                    <button type="button" (click)="removeInstruction($index)" class="btn btn-remove">
+                        ×
+                    </button>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="button" routerLink="/recipes" class="btn btn-cancel">
+                Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="recipeForm.invalid">
+                {{ isEditMode() ? 'Actualizar Receta' : 'Crear Receta' }}
+            </button>
+        </div>
+    </form>
+</div>

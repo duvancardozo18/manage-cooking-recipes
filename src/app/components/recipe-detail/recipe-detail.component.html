@@ -1,0 +1,106 @@
+@if (recipe(); as recipe) {
+<div class="recipe-detail-container">
+    <div class="header-actions">
+        <button routerLink="/recipes" class="btn btn-back">
+            ← Volver
+        </button>
+        <div class="action-buttons">
+            <button [routerLink]="['/recipes', recipe.id, 'edit']" class="btn btn-edit">
+                Editar
+            </button>
+            <button (click)="deleteRecipe()" class="btn btn-delete">
+                Eliminar
+            </button>
+        </div>
+    </div>
+
+    <div class="recipe-header">
+        @if (recipe.imageUrl) {
+        <div class="recipe-image-large">
+            <img [src]="recipe.imageUrl" [alt]="recipe.name" />
+        </div>
+        }
+
+        <div class="recipe-title-section">
+            <h1 class="recipe-title">{{ recipe.name }}</h1>
+            <p class="recipe-description">{{ recipe.description }}</p>
+
+            <div class="recipe-meta-badges">
+                <span class="badge difficulty-badge" [style.background-color]="getDifficultyColor(recipe.difficulty)">
+                    {{ recipe.difficulty | difficulty }}
+                </span>
+                <span class="badge category-badge">
+                    {{ recipe.category }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="recipe-info-grid">
+        <div class="info-card">
+            <div class="info-content">
+                <span class="info-label">Tiempo de Preparación</span>
+                <span class="info-value">{{ recipe.prepTime | cookingTime }}</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-content">
+                <span class="info-label">Tiempo de Cocción</span>
+                <span class="info-value">{{ recipe.cookTime | cookingTime }}</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-content">
+                <span class="info-label">Tiempo Total</span>
+                <span class="info-value">{{ getTotalTime() | cookingTime }}</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-content">
+                <span class="info-label">Porciones</span>
+                <span class="info-value">{{ recipe.servings }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="recipe-content-grid">
+        <div class="ingredients-section">
+            <h2 class="section-title">Ingredientes</h2>
+            <ul class="ingredients-list">
+                @for (ingredient of recipe.ingredients; track $index) {
+                <li class="ingredient-item">
+                    <span class="checkbox">✓</span>
+                    {{ ingredient }}
+                </li>
+                }
+            </ul>
+        </div>
+
+        <div class="instructions-section">
+            <h2 class="section-title">Instrucciones</h2>
+            <ol class="instructions-list">
+                @for (instruction of recipe.instructions; track $index) {
+                <li class="instruction-item">
+                    <span class="step-number">{{ $index + 1 }}</span>
+                    <span class="step-text">{{ instruction }}</span>
+                </li>
+                }
+            </ol>
+        </div>
+    </div>
+
+    <div class="recipe-footer">
+        <p class="footer-text">
+            Creada: {{ recipe.createdAt | date:'medium' }}
+        </p>
+        <p class="footer-text">
+            Última Actualización: {{ recipe.updatedAt | date:'medium' }}
+        </p>
+    </div>
+</div>
+} @else {
+<div class="loading">Cargando receta...</div>
+}
