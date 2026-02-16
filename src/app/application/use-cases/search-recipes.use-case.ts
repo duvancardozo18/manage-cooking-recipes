@@ -1,5 +1,5 @@
-import { Recipe } from '../entities/recipe.entity';
-import { RecipeRepository } from '../repositories/recipe.repository';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 
 export class SearchRecipesUseCase {
     constructor(private repository: RecipeRepository) { }

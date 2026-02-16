@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RecipeApplicationService } from './recipe-application.service';
-import { Recipe, RecipeCreationData, RecipeUpdateData } from '../../domain/entities/recipe.entity';
+import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
+import { CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
 
 describe('RecipeApplicationService', () => {
     let service: RecipeApplicationService;
@@ -196,7 +197,7 @@ describe('RecipeApplicationService', () => {
     });
 
     describe('createRecipe', () => {
-        const validRecipeData: RecipeCreationData = {
+        const validRecipeData: CreateRecipeDto = {
             name: 'Test Recipe',
             description: 'This is a test recipe with enough characters',
             ingredients: ['Ingredient 1', 'Ingredient 2'],
@@ -267,7 +268,7 @@ describe('RecipeApplicationService', () => {
         });
 
         it('should update existing recipe', () => {
-            const updateData: RecipeUpdateData = {
+            const updateData: UpdateRecipeDto = {
                 name: 'Updated Recipe Name',
                 prepTime: 15
             };
@@ -280,7 +281,7 @@ describe('RecipeApplicationService', () => {
         });
 
         it('should update signal after updating recipe', () => {
-            const updateData: RecipeUpdateData = { name: 'Changed Name' };
+            const updateData: UpdateRecipeDto = { name: 'Changed Name' };
 
             service.updateRecipe(existingRecipeId, updateData);
 
@@ -291,20 +292,20 @@ describe('RecipeApplicationService', () => {
         });
 
         it('should throw error when updating non-existent recipe', () => {
-            const updateData: RecipeUpdateData = { name: 'New Name' };
+            const updateData: UpdateRecipeDto = { name: 'New Name' };
 
             expect(() => service.updateRecipe('nonexistent-id', updateData)).toThrow();
         });
 
         it('should throw error for invalid update data', () => {
-            const updateData: RecipeUpdateData = { name: 'AB' };
+            const updateData: UpdateRecipeDto = { name: 'AB' };
 
             expect(() => service.updateRecipe(existingRecipeId, updateData)).toThrow();
         });
 
         it('should handle partial updates', () => {
             const originalRecipe = service.getRecipeById(existingRecipeId);
-            const updateData: RecipeUpdateData = { prepTime: 999 };
+            const updateData: UpdateRecipeDto = { prepTime: 999 };
 
             const updated = service.updateRecipe(existingRecipeId, updateData);
 
@@ -518,7 +519,7 @@ describe('RecipeApplicationService', () => {
     describe('Observer Pattern - RxJS Observables', () => {
         it('should emit event when a new recipe is added', () => {
             return new Promise<void>((resolve) => {
-                const recipeData: RecipeCreationData = {
+                const recipeData: CreateRecipeDto = {
                     name: 'Test Recipe Observer',
                     description: 'Testing Observer Pattern with RxJS',
                     category: 'Postres',
@@ -549,7 +550,7 @@ describe('RecipeApplicationService', () => {
                 const recipes = service.getRecipes()();
                 const existingRecipe = recipes[0];
 
-                const updateData: RecipeUpdateData = {
+                const updateData: UpdateRecipeDto = {
                     name: 'Updated Recipe Name',
                     description: existingRecipe.description,
                     category: existingRecipe.category,
@@ -592,7 +593,7 @@ describe('RecipeApplicationService', () => {
         });
 
         it('should allow multiple observers to subscribe to recipeAdded$', () => {
-            const recipeData: RecipeCreationData = {
+            const recipeData: CreateRecipeDto = {
                 name: 'Multi Observer Test',
                 description: 'Testing multiple observers',
                 category: 'Postres',
@@ -626,7 +627,7 @@ describe('RecipeApplicationService', () => {
         });
 
         it('should not emit when recipe creation fails', () => {
-            const invalidData: RecipeCreationData = {
+            const invalidData: CreateRecipeDto = {
                 name: 'AB', // Too short, will fail validation
                 description: 'Short', // Too short
                 category: 'Test',

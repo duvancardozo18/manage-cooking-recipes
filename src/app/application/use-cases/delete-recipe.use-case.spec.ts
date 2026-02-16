@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DeleteRecipeUseCase } from './delete-recipe.use-case';
-import { Recipe } from '../entities/recipe.entity';
-import { RecipeRepository } from '../repositories/recipe.repository';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 
 describe('DeleteRecipeUseCase', () => {
     let useCase: DeleteRecipeUseCase;

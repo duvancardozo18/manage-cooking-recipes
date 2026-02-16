@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CreateRecipeUseCase } from './create-recipe.use-case';
-import { Recipe, RecipeCreationData } from '../entities/recipe.entity';
-import { RecipeRepository } from '../repositories/recipe.repository';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeRepository } from '../../domain/repositories/recipe.repository';
+import { CreateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
 
 describe('CreateRecipeUseCase', () => {
     let useCase: CreateRecipeUseCase;
     let mockRepository: RecipeRepository;
-    let validRecipeData: RecipeCreationData;
+    let validRecipeData: CreateRecipeDto;
 
     beforeEach(() => {
         // Create mock repository

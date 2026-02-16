@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Recipe, RecipeCreationData, RecipeUpdateData, RecipeMapper, RecipeDto } from './recipe.entity';
+import { Recipe } from './recipe.entity';
+import { RecipeMapper } from '../../infrastructure/mappers/recipe.mapper';
+import { RecipeDto, CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
 
 describe('Recipe Entity', () => {
-    let mockRecipeData: RecipeCreationData;
+    let mockRecipeData: CreateRecipeDto;
 
     beforeEach(() => {
         mockRecipeData = {
@@ -137,155 +139,6 @@ describe('Recipe Entity', () => {
             );
 
             expect(recipe.getTotalTime()).toBe(300);
-        });
-    });
-
-    describe('create', () => {
-        it('should create a new recipe with generated id and timestamps', () => {
-            const recipe = Recipe.create(mockRecipeData);
-
-            expect(recipe.id).toBeDefined();
-            expect(recipe.id).not.toBe('');
-            expect(recipe.name).toBe(mockRecipeData.name);
-            expect(recipe.description).toBe(mockRecipeData.description);
-            expect(recipe.ingredients).toEqual(mockRecipeData.ingredients);
-            expect(recipe.instructions).toEqual(mockRecipeData.instructions);
-            expect(recipe.prepTime).toBe(mockRecipeData.prepTime);
-            expect(recipe.cookTime).toBe(mockRecipeData.cookTime);
-            expect(recipe.servings).toBe(mockRecipeData.servings);
-            expect(recipe.difficulty).toBe(mockRecipeData.difficulty);
-            expect(recipe.category).toBe(mockRecipeData.category);
-            expect(recipe.imageUrl).toBe(mockRecipeData.imageUrl);
-            expect(recipe.createdAt).toBeInstanceOf(Date);
-            expect(recipe.updatedAt).toBeInstanceOf(Date);
-            expect(recipe.createdAt.getTime()).toBe(recipe.updatedAt.getTime());
-        });
-
-        it('should create recipe without imageUrl', () => {
-            const dataWithoutImage = { ...mockRecipeData };
-            delete dataWithoutImage.imageUrl;
-
-            const recipe = Recipe.create(dataWithoutImage);
-
-            expect(recipe.imageUrl).toBeNull();
-        });
-
-        it('should create recipe with empty imageUrl', () => {
-            const dataWithEmptyImage = { ...mockRecipeData, imageUrl: '' };
-
-            const recipe = Recipe.create(dataWithEmptyImage);
-
-            expect(recipe.imageUrl).toBeNull();
-        });
-
-        it('should handle all difficulty levels', () => {
-            const difficulties: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
-
-            difficulties.forEach((difficulty) => {
-                const data = { ...mockRecipeData, difficulty };
-                const recipe = Recipe.create(data);
-                expect(recipe.difficulty).toBe(difficulty);
-            });
-        });
-    });
-
-    describe('update', () => {
-        let existingRecipe: Recipe;
-        let updateData: RecipeUpdateData;
-
-        beforeEach(() => {
-            existingRecipe = Recipe.create(mockRecipeData);
-            updateData = {
-                name: 'Updated Recipe Name',
-                prepTime: 15,
-                cookTime: 25
-            };
-        });
-
-        it('should update specified fields and keep others unchanged', () => {
-            const updatedRecipe = existingRecipe.update(updateData);
-
-            expect(updatedRecipe.id).toBe(existingRecipe.id);
-            expect(updatedRecipe.name).toBe(updateData.name);
-            expect(updatedRecipe.prepTime).toBe(updateData.prepTime);
-            expect(updatedRecipe.cookTime).toBe(updateData.cookTime);
-            expect(updatedRecipe.description).toBe(existingRecipe.description);
-            expect(updatedRecipe.ingredients).toBe(existingRecipe.ingredients);
-            expect(updatedRecipe.category).toBe(existingRecipe.category);
-            expect(updatedRecipe.createdAt).toBe(existingRecipe.createdAt);
-        });
-
-        it('should update updatedAt timestamp', () => {
-            const updatedRecipe = existingRecipe.update(updateData);
-
-            expect(updatedRecipe.updatedAt.getTime()).toBeGreaterThanOrEqual(
-                existingRecipe.updatedAt.getTime()
-            );
-        });
-
-        it('should keep createdAt unchanged', () => {
-            const updatedRecipe = existingRecipe.update(updateData);
-
-            expect(updatedRecipe.createdAt).toBe(existingRecipe.createdAt);
-        });
-
-        it('should update all fields when all are provided', () => {
-            const fullUpdateData: RecipeUpdateData = {
-                name: 'New Name',
-                description: 'New Description',
-                ingredients: ['New Ingredient'],
-                instructions: ['New Instruction'],
-                prepTime: 5,
-                cookTime: 10,
-                servings: 2,
-                difficulty: 'hard',
-                category: 'New Category',
-                imageUrl: 'new-image.jpg'
-            };
-
-            const updatedRecipe = existingRecipe.update(fullUpdateData);
-
-            expect(updatedRecipe.name).toBe(fullUpdateData.name);
-            expect(updatedRecipe.description).toBe(fullUpdateData.description);
-            expect(updatedRecipe.ingredients).toEqual(fullUpdateData.ingredients);
-            expect(updatedRecipe.instructions).toEqual(fullUpdateData.instructions);
-            expect(updatedRecipe.prepTime).toBe(fullUpdateData.prepTime);
-            expect(updatedRecipe.cookTime).toBe(fullUpdateData.cookTime);
-            expect(updatedRecipe.servings).toBe(fullUpdateData.servings);
-            expect(updatedRecipe.difficulty).toBe(fullUpdateData.difficulty);
-            expect(updatedRecipe.category).toBe(fullUpdateData.category);
-            expect(updatedRecipe.imageUrl).toBe(fullUpdateData.imageUrl);
-        });
-
-        it('should handle empty update data', () => {
-            const updatedRecipe = existingRecipe.update({});
-
-            expect(updatedRecipe.name).toBe(existingRecipe.name);
-            expect(updatedRecipe.description).toBe(existingRecipe.description);
-            expect(updatedRecipe.prepTime).toBe(existingRecipe.prepTime);
-            expect(updatedRecipe.cookTime).toBe(existingRecipe.cookTime);
-        });
-
-        it('should remove imageUrl when explicitly set to null', () => {
-            const updatedRecipe = existingRecipe.update({ imageUrl: null });
-
-            expect(updatedRecipe.imageUrl).toBeNull();
-        });
-
-        it('should set imageUrl to empty string when provided', () => {
-            const updatedRecipe = existingRecipe.update({ imageUrl: '' });
-
-            expect(updatedRecipe.imageUrl).toBe('');
-        });
-
-        it('should not modify original recipe (immutability)', () => {
-            const originalName = existingRecipe.name;
-            const originalPrepTime = existingRecipe.prepTime;
-
-            existingRecipe.update({ name: 'Changed', prepTime: 999 });
-
-            expect(existingRecipe.name).toBe(originalName);
-            expect(existingRecipe.prepTime).toBe(originalPrepTime);
         });
     });
 });

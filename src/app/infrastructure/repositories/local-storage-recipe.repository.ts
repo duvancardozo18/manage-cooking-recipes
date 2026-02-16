@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Recipe, RecipeMapper, RecipeDto } from '../../domain/entities/recipe.entity';
+import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
+import { RecipeMapper } from '../mappers/recipe.mapper';
+import { RecipeDto } from '../dtos/recipe.dto';
 
 @Injectable({
     providedIn: 'root'
@@ -60,20 +62,20 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
 
     findByCategory(category: string): Recipe[] {
         if (!category) return this.findAll();
-        return this.findAll().filter(r => r.category === category);
+        return this.findAll().filter(r => r.category.getValue() === category);
     }
 
     findByDifficulty(difficulty: string): Recipe[] {
         if (!difficulty) return this.findAll();
-        return this.findAll().filter(r => r.difficulty === difficulty);
+        return this.findAll().filter(r => r.difficulty.getValue() === difficulty);
     }
 
     search(query: string): Recipe[] {
         const lowerQuery = query.toLowerCase();
         return this.findAll().filter(recipe =>
-            recipe.name.toLowerCase().includes(lowerQuery) ||
+            recipe.name.getValue().toLowerCase().includes(lowerQuery) ||
             recipe.description.toLowerCase().includes(lowerQuery) ||
-            recipe.category.toLowerCase().includes(lowerQuery)
+            recipe.category.getValue().toLowerCase().includes(lowerQuery)
         );
     }
 

@@ -1,4 +1,4 @@
-import { RecipeRepository } from '../repositories/recipe.repository';
+import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 
 export class DeleteRecipeUseCase {
     constructor(private repository: RecipeRepository) { }

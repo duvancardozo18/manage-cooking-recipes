@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GetAllRecipesUseCase } from './get-all-recipes.use-case';
 import { GetRecipeByIdUseCase } from './get-recipe-by-id.use-case';
 import { SearchRecipesUseCase } from './search-recipes.use-case';
-import { Recipe } from '../entities/recipe.entity';
-import { RecipeRepository } from '../repositories/recipe.repository';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 
 describe('GetAllRecipesUseCase', () => {
     let useCase: GetAllRecipesUseCase;

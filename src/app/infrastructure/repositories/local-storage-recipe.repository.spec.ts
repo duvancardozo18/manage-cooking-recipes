@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { LocalStorageRecipeRepository } from './local-storage-recipe.repository';
-import { Recipe, RecipeDto } from '../../domain/entities/recipe.entity';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeDto } from '../dtos/recipe.dto';
 
 describe('LocalStorageRecipeRepository', () => {
     let repository: LocalStorageRecipeRepository;

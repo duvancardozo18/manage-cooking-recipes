@@ -1,8 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Recipe, RecipeMapper } from '../../domain/entities/recipe.entity';
+import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
+import { RecipeMapper } from '../mappers/recipe.mapper';
 import { firstValueFrom, Subject } from 'rxjs';
+import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
+import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
+import { Servings } from '../../domain/value-objects/servings.value-object';
+import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Category } from '../../domain/value-objects/category.value-object';
 
 
 @Injectable({
@@ -102,20 +108,21 @@ export class ApiRecipeRepository implements RecipeRepository {
         if (ingredients.length <= 5) difficulty = 'easy';
         else if (ingredients.length >= 10) difficulty = 'hard';
 
-        const recipeData = {
-            name: apiMeal.strMeal || 'Sin nombre',
-            description: `Receta de ${apiMeal.strMeal}. ${instructionsText.substring(0, 150)}...`,
-            category: this.translateCategory(category),
-            difficulty,
-            prepTime: 15,
-            cookTime: 30,
-            servings: 4,
+        return new Recipe(
+            apiMeal.idMeal,
+            RecipeName.create(apiMeal.strMeal || 'Sin nombre'),
+            `Receta de ${apiMeal.strMeal}. ${instructionsText.substring(0, 150)}...`,
             ingredients,
-            instructions: instructions.length > 0 ? instructions : ['Preparar según las instrucciones'],
-            imageUrl: apiMeal.strMealThumb || '',
-        };
-
-        return Recipe.create(recipeData);
+            instructions.length > 0 ? instructions : ['Preparar según las instrucciones'],
+            CookingTime.create(15),
+            CookingTime.create(30),
+            Servings.create(4),
+            Difficulty.create(difficulty),
+            Category.create(this.translateCategory(category)),
+            apiMeal.strMealThumb || '',
+            new Date(),
+            new Date()
+        );
     }
 
     private translateCategory(category: string): string {
@@ -166,22 +173,22 @@ export class ApiRecipeRepository implements RecipeRepository {
 
     findByCategory(category: string): Recipe[] {
         return this.recipesCache.filter(r =>
-            r.category.toLowerCase() === category.toLowerCase()
+            r.category.getValue().toLowerCase() === category.toLowerCase()
         );
     }
 
     findByDifficulty(difficulty: string): Recipe[] {
         return this.recipesCache.filter(r =>
-            r.difficulty.toLowerCase() === difficulty.toLowerCase()
+            r.difficulty.getValue().toLowerCase() === difficulty.toLowerCase()
         );
     }
 
     search(query: string): Recipe[] {
         const lowerQuery = query.toLowerCase();
         return this.recipesCache.filter(r =>
-            r.name.toLowerCase().includes(lowerQuery) ||
+            r.name.getValue().toLowerCase().includes(lowerQuery) ||
             r.description.toLowerCase().includes(lowerQuery) ||
-            r.category.toLowerCase().includes(lowerQuery) ||
+            r.category.getValue().toLowerCase().includes(lowerQuery) ||
             r.ingredients.some(i => i.toLowerCase().includes(lowerQuery))
         );
     }

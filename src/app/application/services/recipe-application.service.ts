@@ -1,13 +1,14 @@
 import { Injectable, signal, computed, Inject } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
-import { Recipe, RecipeCreationData, RecipeUpdateData } from '../../domain/entities/recipe.entity';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
-import { CreateRecipeUseCase } from '../../domain/use-cases/create-recipe.use-case';
-import { DeleteRecipeUseCase } from '../../domain/use-cases/delete-recipe.use-case';
-import { GetAllRecipesUseCase } from '../../domain/use-cases/get-all-recipes.use-case';
-import { GetRecipeByIdUseCase } from '../../domain/use-cases/get-recipe-by-id.use-case';
-import { SearchRecipesUseCase } from '../../domain/use-cases/search-recipes.use-case';
-import { UpdateRecipeUseCase } from '../../domain/use-cases/update-recipe.use-case';
+import { CreateRecipeUseCase } from '../use-cases/create-recipe.use-case';
+import { DeleteRecipeUseCase } from '../use-cases/delete-recipe.use-case';
+import { GetAllRecipesUseCase } from '../use-cases/get-all-recipes.use-case';
+import { GetRecipeByIdUseCase } from '../use-cases/get-recipe-by-id.use-case';
+import { SearchRecipesUseCase } from '../use-cases/search-recipes.use-case';
+import { UpdateRecipeUseCase } from '../use-cases/update-recipe.use-case';
 import { RECIPE_REPOSITORY } from '../../core/tokens/repository.tokens';
 
 
@@ -74,7 +75,7 @@ export class RecipeApplicationService {
     }
 
 
-    createRecipe(data: RecipeCreationData): Recipe | null {
+    createRecipe(data: CreateRecipeDto): Recipe | null {
         try {
             const recipe = this.createRecipeUseCase.execute(data);
             this.loadRecipes();
@@ -89,7 +90,7 @@ export class RecipeApplicationService {
         }
     }
 
-    updateRecipe(id: string, data: RecipeUpdateData): Recipe | null {
+    updateRecipe(id: string, data: UpdateRecipeDto): Recipe | null {
         try {
             const recipe = this.updateRecipeUseCase.execute(id, data);
             this.loadRecipes(); // Refresh state
@@ -152,7 +153,7 @@ export class RecipeApplicationService {
 
     getCategories(): string[] {
         const recipes = this.recipesSignal();
-        const categories = new Set(recipes.map(r => r.category));
+        const categories = new Set(recipes.map(r => r.category.getValue()));
         return Array.from(categories).sort();
     }
 

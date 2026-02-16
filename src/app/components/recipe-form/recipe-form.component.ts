@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
-import { RecipeCreationData, RecipeUpdateData } from '../../domain/entities/recipe.entity';
+import { CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
 
 @Component({
     selector: 'app-recipe-form',
@@ -137,7 +137,7 @@ export class RecipeFormComponent implements OnInit, OnDestroy {
 
             try {
                 if (this.isEditMode() && this.recipeId()) {
-                    const updateData: RecipeUpdateData = {
+                    const updateData: UpdateRecipeDto = {
                         name: formData.name,
                         description: formData.description,
                         category: formData.category,
@@ -155,7 +155,7 @@ export class RecipeFormComponent implements OnInit, OnDestroy {
                         this.router.navigate(['/recipes', updated.id]);
                     }
                 } else {
-                    const creationData: RecipeCreationData = {
+                    const creationData: CreateRecipeDto = {
                         name: formData.name,
                         description: formData.description,
                         category: formData.category,

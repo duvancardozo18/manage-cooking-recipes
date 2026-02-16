@@ -1,4 +1,5 @@
-import { Recipe, DifficultyLevel } from '../../domain/entities/recipe.entity';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { DifficultyLevel } from '../../domain/value-objects/difficulty.value-object';
 
 export interface RecipeViewModel {
     id: string;
@@ -22,17 +23,17 @@ export class RecipeViewModelMapper {
     static toViewModel(recipe: Recipe): RecipeViewModel {
         return {
             id: recipe.id,
-            name: recipe.name,
+            name: recipe.name.getValue(),
             description: recipe.description,
             ingredients: recipe.ingredients,
             instructions: recipe.instructions,
-            prepTime: recipe.prepTime,
-            cookTime: recipe.cookTime,
-            totalTime: recipe.getTotalTime(),
-            servings: recipe.servings,
-            difficulty: recipe.difficulty,
-            difficultyColor: this.getDifficultyColor(recipe.difficulty),
-            category: recipe.category,
+            prepTime: recipe.prepTime.getValue(),
+            cookTime: recipe.cookTime.getValue(),
+            totalTime: recipe.getTotalTime().getValue(),
+            servings: recipe.servings.getValue(),
+            difficulty: recipe.difficulty.getValue(),
+            difficultyColor: this.getDifficultyColor(recipe.difficulty.getValue()),
+            category: recipe.category.getValue(),
             imageUrl: recipe.imageUrl,
             createdAt: recipe.createdAt,
             updatedAt: recipe.updatedAt
