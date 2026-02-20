@@ -1,7 +1,12 @@
+import { Injectable, Inject } from '@angular/core';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
+import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
 
+@Injectable({
+    providedIn: 'root'
+})
 export class DeleteRecipeUseCase {
-    constructor(private repository: RecipeRepository) { }
+    constructor(@Inject(RECIPE_REPOSITORY) private repository: RecipeRepository) { }
 
     execute(id: string): boolean {
         const recipe = this.repository.findById(id);

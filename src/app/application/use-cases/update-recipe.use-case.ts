@@ -1,3 +1,4 @@
+import { Injectable, Inject } from '@angular/core';
 import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 import { UpdateRecipeInput } from '../interfaces/recipe-inputs.interface';
@@ -6,9 +7,13 @@ import { CookingTime } from '../../domain/value-objects/cooking-time.value-objec
 import { Servings } from '../../domain/value-objects/servings.value-object';
 import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
 import { Category } from '../../domain/value-objects/category.value-object';
+import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
 
+@Injectable({
+    providedIn: 'root'
+})
 export class UpdateRecipeUseCase {
-    constructor(private repository: RecipeRepository) { }
+    constructor(@Inject(RECIPE_REPOSITORY) private repository: RecipeRepository) { }
 
     execute(id: string, data: UpdateRecipeInput): Recipe {
         const existingRecipe = this.repository.findById(id);

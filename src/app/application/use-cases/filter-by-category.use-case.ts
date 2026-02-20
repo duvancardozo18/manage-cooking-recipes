@@ -6,10 +6,14 @@ import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
 @Injectable({
     providedIn: 'root'
 })
-export class GetRecipeByIdUseCase {
+export class FilterByCategoryUseCase {
     constructor(@Inject(RECIPE_REPOSITORY) private repository: RecipeRepository) { }
 
-    execute(id: string): Recipe | null {
-        return this.repository.findById(id);
+    execute(category: string): Recipe[] {
+        if (!category || typeof category !== 'string' || category.trim().length === 0) {
+            return [];
+        }
+
+        return this.repository.findByCategory(category);
     }
 }

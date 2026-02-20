@@ -1,61 +1,39 @@
-import { Injectable, signal, computed, Inject } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
 import { Recipe } from '../../domain/entities/recipe.entity';
 import { CreateRecipeInput, UpdateRecipeInput } from '../interfaces/recipe-inputs.interface';
-import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 import { CreateRecipeUseCase } from '../use-cases/create-recipe.use-case';
 import { DeleteRecipeUseCase } from '../use-cases/delete-recipe.use-case';
 import { GetAllRecipesUseCase } from '../use-cases/get-all-recipes.use-case';
 import { GetRecipeByIdUseCase } from '../use-cases/get-recipe-by-id.use-case';
 import { SearchRecipesUseCase } from '../use-cases/search-recipes.use-case';
 import { UpdateRecipeUseCase } from '../use-cases/update-recipe.use-case';
-import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
-
+import { FilterByCategoryUseCase } from '../use-cases/filter-by-category.use-case';
+import { FilterByDifficultyUseCase } from '../use-cases/filter-by-difficulty.use-case';
+import { GetCategoriesUseCase } from '../use-cases/get-categories.use-case';
 
 @Injectable({
     providedIn: 'root'
 })
 export class RecipeApplicationService {
-    private getAllRecipesUseCase: GetAllRecipesUseCase;
-    private getRecipeByIdUseCase: GetRecipeByIdUseCase;
-    private createRecipeUseCase: CreateRecipeUseCase;
-    private updateRecipeUseCase: UpdateRecipeUseCase;
-    private deleteRecipeUseCase: DeleteRecipeUseCase;
-    private searchRecipesUseCase: SearchRecipesUseCase;
-
-    private recipeAddedSubject = new Subject<Recipe>();
-    public recipeAdded$ = this.recipeAddedSubject.asObservable();
-    private recipeUpdatedSubject = new Subject<Recipe>();
-    public recipeUpdated$ = this.recipeUpdatedSubject.asObservable();
-    private recipeDeletedSubject = new Subject<string>();
-    public recipeDeleted$ = this.recipeDeletedSubject.asObservable();
-
-    private recipesSignal = signal<Recipe[]>([]);
-
     constructor(
-        @Inject(RECIPE_REPOSITORY) private repository: RecipeRepository
-    ) {
-        this.getAllRecipesUseCase = new GetAllRecipesUseCase(this.repository);
-        this.getRecipeByIdUseCase = new GetRecipeByIdUseCase(this.repository);
-        this.createRecipeUseCase = new CreateRecipeUseCase(this.repository);
-        this.updateRecipeUseCase = new UpdateRecipeUseCase(this.repository);
-        this.deleteRecipeUseCase = new DeleteRecipeUseCase(this.repository);
-        this.searchRecipesUseCase = new SearchRecipesUseCase(this.repository);
+        private getAllRecipesUseCase: GetAllRecipesUseCase,
+        private getRecipeByIdUseCase: GetRecipeByIdUseCase,
+        private createRecipeUseCase: CreateRecipeUseCase,
+        private updateRecipeUseCase: UpdateRecipeUseCase,
+        private deleteRecipeUseCase: DeleteRecipeUseCase,
+        private searchRecipesUseCase: SearchRecipesUseCase,
+        private filterByCategoryUseCase: FilterByCategoryUseCase,
+        private filterByDifficultyUseCase: FilterByDifficultyUseCase,
+        private getCategoriesUseCase: GetCategoriesUseCase
+    ) { }
 
-        this.loadRecipes();
-
-        if ('recipesLoaded$' in this.repository) {
-            const apiRepository = this.repository as any;
-            apiRepository.recipesLoaded$.subscribe(() => {
-                console.log(' Recipes loaded from API, refreshing...');
-                this.loadRecipes();
-            });
+    getRecipes(): Recipe[] {
+        try {
+            return this.getAllRecipesUseCase.execute();
+        } catch (error) {
+            console.error('Error getting recipes:', error);
+            return [];
         }
-    }
-
-
-    getRecipes() {
-        return this.recipesSignal.asReadonly();
     }
 
     getRecipeById(id: string): Recipe | null {
@@ -67,29 +45,18 @@ export class RecipeApplicationService {
         }
     }
 
-
-    createRecipe(data: CreateRecipeInput): Recipe | null {
+    createRecipe(data: CreateRecipeInput): Recipe {
         try {
-            const recipe = this.createRecipeUseCase.execute(data);
-            this.loadRecipes();
-            this.recipeAddedSubject.next(recipe);
-
-            return recipe;
+            return this.createRecipeUseCase.execute(data);
         } catch (error) {
             console.error('Error creating recipe:', error);
             throw error;
         }
     }
 
-    updateRecipe(id: string, data: UpdateRecipeInput): Recipe | null {
+    updateRecipe(id: string, data: UpdateRecipeInput): Recipe {
         try {
-            const recipe = this.updateRecipeUseCase.execute(id, data);
-            this.loadRecipes(); 
-            if (recipe) {
-                this.recipeUpdatedSubject.next(recipe);
-            }
-
-            return recipe;
+            return this.updateRecipeUseCase.execute(id, data);
         } catch (error) {
             console.error('Error updating recipe:', error);
             throw error;
@@ -98,13 +65,7 @@ export class RecipeApplicationService {
 
     deleteRecipe(id: string): boolean {
         try {
-            const result = this.deleteRecipeUseCase.execute(id);
-            this.loadRecipes(); 
-            if (result) {
-                this.recipeDeletedSubject.next(id);
-            }
-
-            return result;
+            return this.deleteRecipeUseCase.execute(id);
         } catch (error) {
             console.error('Error deleting recipe:', error);
             return false;
@@ -122,7 +83,7 @@ export class RecipeApplicationService {
 
     filterByCategory(category: string): Recipe[] {
         try {
-            return this.repository.findByCategory(category);
+            return this.filterByCategoryUseCase.execute(category);
         } catch (error) {
             console.error('Error filtering by category:', error);
             return [];
@@ -131,7 +92,7 @@ export class RecipeApplicationService {
 
     filterByDifficulty(difficulty: string): Recipe[] {
         try {
-            return this.repository.findByDifficulty(difficulty);
+            return this.filterByDifficultyUseCase.execute(difficulty);
         } catch (error) {
             console.error('Error filtering by difficulty:', error);
             return [];
@@ -139,19 +100,11 @@ export class RecipeApplicationService {
     }
 
     getCategories(): string[] {
-        const recipes = this.recipesSignal();
-        const categories = new Set(recipes.map(r => r.category.getValue()));
-        return Array.from(categories).sort();
-    }
-
-
-    private loadRecipes(): void {
         try {
-            const recipes = this.getAllRecipesUseCase.execute();
-            this.recipesSignal.set(recipes);
+            return this.getCategoriesUseCase.execute();
         } catch (error) {
-            console.error('Error loading recipes:', error);
-            this.recipesSignal.set([]);
+            console.error('Error getting categories:', error);
+            return [];
         }
     }
 }
