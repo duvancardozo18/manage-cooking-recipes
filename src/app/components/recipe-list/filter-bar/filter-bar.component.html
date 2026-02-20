@@ -1,0 +1,28 @@
+<div class="filters">
+    <div class="search-box">
+        <input type="text" [value]="searchQuery" (input)="onSearchChange($event)" placeholder="Buscar recetas..."
+            class="search-input" />
+    </div>
+
+    <div class="filter-group">
+        <select [value]="selectedCategory" (change)="onCategoryChange($event)" class="filter-select">
+            <option value="">Todas las categorías</option>
+            @for (category of categories; track category) {
+            <option [value]="category">{{ category }}</option>
+            }
+        </select>
+
+        <select [value]="selectedDifficulty" (change)="onDifficultyChange($event)" class="filter-select">
+            <option value="">Todas las dificultades</option>
+            <option value="easy">Fácil</option>
+            <option value="medium">Media</option>
+            <option value="hard">Difícil</option>
+        </select>
+
+        @if (hasActiveFilters()) {
+        <button (click)="onClearFilters()" class="btn btn-secondary">
+            Limpiar Filtros
+        </button>
+        }
+    </div>
+</div>

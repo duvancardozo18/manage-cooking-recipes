@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { RecipeViewModel, RecipeViewModelMapper } from '../../presentation/view-models/recipe.view-model';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeEventService } from '../../infrastructure/services/recipe-event.service';
 import { CookingTimePipe } from '../../presentation/pipes/cooking-time.pipe';
 import { DifficultyPipe } from '../../presentation/pipes/difficulty.pipe';
 
@@ -23,7 +25,8 @@ export class RecipeDetailComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private recipeService: RecipeApplicationService
+        private recipeService: RecipeApplicationService,
+        private eventService: RecipeEventService
     ) {
         console.log('RecipeDetailComponent - Constructor llamado');
     }
@@ -43,7 +46,7 @@ export class RecipeDetailComponent implements OnInit, OnDestroy {
 
         // Observer Pattern: Suscribirse a actualizaciones de esta receta
         this.subscriptions.add(
-            this.recipeService.recipeUpdated$.subscribe(recipe => {
+            this.eventService.recipeUpdated$.subscribe((recipe: Recipe) => {
                 if (recipe.id === this.currentRecipeId) {
                     console.log('✏️ [Observer] Receta actual actualizada:', recipe);
                     this.recipe.set(RecipeViewModelMapper.toViewModel(recipe));
@@ -53,7 +56,7 @@ export class RecipeDetailComponent implements OnInit, OnDestroy {
 
         // Observer Pattern: Suscribirse a eliminación de recetas
         this.subscriptions.add(
-            this.recipeService.recipeDeleted$.subscribe(id => {
+            this.eventService.recipeDeleted$.subscribe((id: string) => {
                 if (id === this.currentRecipeId) {
                     console.log('❌ [Observer] Receta actual eliminada, redirigiendo...');
                     this.router.navigate(['/recipes']);

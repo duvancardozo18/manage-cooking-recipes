@@ -3,6 +3,7 @@ import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 import { RecipeMapper } from '../mappers/recipe.mapper';
 import { RecipeDto } from '../dtos/recipe.dto';
+import { RecipeEventService } from '../services/recipe-event.service';
 
 @Injectable({
     providedIn: 'root'
@@ -10,7 +11,7 @@ import { RecipeDto } from '../dtos/recipe.dto';
 export class LocalStorageRecipeRepository implements RecipeRepository {
     private readonly STORAGE_KEY = 'recipes';
 
-    constructor() {
+    constructor(private eventService: RecipeEventService) {
         // Initialize with sample data if empty
         if (!this.hasData()) {
             this.initializeWithSampleData();
@@ -31,6 +32,7 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
         const recipes = this.findAll();
         recipes.push(recipe);
         this.saveToStorage(recipes);
+        this.eventService.emitRecipeAdded(recipe);
         return recipe;
     }
 
@@ -44,6 +46,7 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
 
         recipes[index] = recipe;
         this.saveToStorage(recipes);
+        this.eventService.emitRecipeUpdated(recipe);
         return recipe;
     }
 
@@ -57,6 +60,7 @@ export class LocalStorageRecipeRepository implements RecipeRepository {
         }
 
         this.saveToStorage(filtered);
+        this.eventService.emitRecipeDeleted(id);
         return true;
     }
 

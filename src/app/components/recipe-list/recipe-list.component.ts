@@ -1,26 +1,26 @@
 import { Component, OnInit, OnDestroy, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { RecipeViewModel, RecipeViewModelMapper } from '../../presentation/view-models/recipe.view-model';
-import { DifficultyPipe } from '../../presentation/pipes/difficulty.pipe';
+import { Recipe } from '../../domain/entities/recipe.entity';
+import { RecipeEventService } from '../../infrastructure/services/recipe-event.service';
+import { RecipeCardComponent } from './recipe-card/recipe-card.component';
+import { FilterBarComponent } from './filter-bar/filter-bar.component';
 
 @Component({
     selector: 'app-recipe-list',
-    imports: [CommonModule, RouterLink, FormsModule, DifficultyPipe],
+    imports: [CommonModule, RouterLink, RecipeCardComponent, FilterBarComponent],
     templateUrl: './recipe-list.component.html',
     styleUrl: './recipe-list.component.css'
 })
 export class RecipeListComponent implements OnInit, OnDestroy {
     private recipeService = inject(RecipeApplicationService);
+    private eventService = inject(RecipeEventService);
     private router = inject(Router);
-
-    // Observer Pattern: Almacenar suscripciones para limpiarlas en ngOnDestroy
     private subscriptions = new Subscription();
 
-    // Signal para mostrar mensajes de notificación
     notificationMessage = signal<string | null>(null);
 
     constructor() {
@@ -31,8 +31,7 @@ export class RecipeListComponent implements OnInit, OnDestroy {
     selectedCategory = signal('');
     selectedDifficulty = signal('');
 
-    // Convert domain entities to view models for presentation
-    recipes = computed(() => RecipeViewModelMapper.toViewModels(this.recipeService.getRecipes()()));
+    recipes = computed(() => RecipeViewModelMapper.toViewModels(this.recipeService.getRecipes()));
     categories = computed(() => this.recipeService.getCategories());
 
     filteredRecipes = computed(() => {
@@ -57,25 +56,22 @@ export class RecipeListComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         console.log('RecipeListComponent - ngOnInit ejecutado');
 
-        // Observer Pattern: Suscribirse a las notificaciones de nuevas recetas
         this.subscriptions.add(
-            this.recipeService.recipeAdded$.subscribe(recipe => {
+            this.eventService.recipeAdded$.subscribe((recipe: Recipe) => {
                 console.log('[Observer] Nueva receta agregada:', recipe);
                 this.showNotification(`¡Nueva receta "${recipe.name}" agregada exitosamente!`);
             })
         );
 
-        // Observer Pattern: Suscribirse a las notificaciones de actualización
         this.subscriptions.add(
-            this.recipeService.recipeUpdated$.subscribe(recipe => {
+            this.eventService.recipeUpdated$.subscribe((recipe: Recipe) => {
                 console.log(' [Observer] Receta actualizada:', recipe);
                 this.showNotification(`Receta "${recipe.name}" actualizada exitosamente`);
             })
         );
 
-        // Observer Pattern: Suscribirse a las notificaciones de eliminación
         this.subscriptions.add(
-            this.recipeService.recipeDeleted$.subscribe(id => {
+            this.eventService.recipeDeleted$.subscribe((id: string) => {
                 console.log(' [Observer] Receta eliminada con ID:', id);
                 this.showNotification('Receta eliminada exitosamente');
             })
@@ -84,7 +80,6 @@ export class RecipeListComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         console.log('RecipeListComponent - ngOnDestroy ejecutado');
-        // Observer Pattern: Cancelar todas las suscripciones para evitar memory leaks
         this.subscriptions.unsubscribe();
     }
 
@@ -109,6 +104,44 @@ export class RecipeListComponent implements OnInit, OnDestroy {
         this.selectedDifficulty.set('');
     }
 
+    
+    handleSearchChange(value: string): void {
+        console.log('📥 [Parent] Recibiendo evento de búsqueda del hijo FilterBar:', value);
+        this.searchQuery.set(value);
+    }
+
+
+    handleCategoryChange(value: string): void {
+        console.log('📥 [Parent] Recibiendo evento de categoría del hijo FilterBar:', value);
+        this.selectedCategory.set(value);
+    }
+
+
+    handleDifficultyChange(value: string): void {
+        console.log('📥 [Parent] Recibiendo evento de dificultad del hijo FilterBar:', value);
+        this.selectedDifficulty.set(value);
+    }
+
+
+    handleClearFilters(): void {
+        console.log('📥 [Parent] Recibiendo evento de limpiar filtros del hijo FilterBar');
+        this.clearFilters();
+    }
+
+
+    handleEditRecipe(id: string): void {
+        console.log('📥 [Parent] Recibiendo evento de editar receta del hijo RecipeCard:', id);
+        this.router.navigate(['/recipes', id, 'edit']);
+    }
+
+
+    handleDeleteRecipe(id: string): void {
+        console.log('📥 [Parent] Recibiendo evento de eliminar receta del hijo RecipeCard:', id);
+        if (confirm('¿Estás seguro de que deseas eliminar esta receta?')) {
+            this.recipeService.deleteRecipe(id);
+        }
+    }
+
     deleteRecipe(id: string, event: Event): void {
         event.preventDefault();
         event.stopPropagation();
@@ -126,10 +159,9 @@ export class RecipeListComponent implements OnInit, OnDestroy {
         return recipe.difficultyColor;
     }
 
-    // Método auxiliar para mostrar notificaciones
+   
     private showNotification(message: string): void {
         this.notificationMessage.set(message);
-        // Auto-ocultar después de 3 segundos
         setTimeout(() => {
             this.notificationMessage.set(null);
         }, 3000);

@@ -43,11 +43,21 @@ src/app/
 │       └── difficulty.pipe.spec.ts
 │
 ├── components/             # Componentes Angular (UI)
-│   ├── recipe-list/
+│   ├── recipe-list/       # Componente Padre
 │   │   ├── recipe-list.component.ts
 │   │   ├── recipe-list.component.html
 │   │   ├── recipe-list.component.css
-│   │   └── recipe-list.component.spec.ts
+│   │   ├── recipe-list.component.spec.ts
+│   │   ├── recipe-card/            # Componente Hijo (@Input/@Output)
+│   │   │   ├── recipe-card.component.ts
+│   │   │   ├── recipe-card.component.html
+│   │   │   ├── recipe-card.component.css
+│   │   │   └── recipe-card.component.spec.ts
+│   │   └── filter-bar/             # Componente Hijo (@Input/@Output)
+│   │       ├── filter-bar.component.ts
+│   │       ├── filter-bar.component.html
+│   │       ├── filter-bar.component.css
+│   │       └── filter-bar.component.spec.ts
 │   ├── recipe-detail/
 │   │   ├── recipe-detail.component.ts
 │   │   ├── recipe-detail.component.html
@@ -94,6 +104,45 @@ src/app/
 10. Componente navega a la vista de detalle
 ```
 
+## 👨‍👦 Comunicación Padre-Hijo
+
+Esta aplicación implementa comunicación entre componentes padre-hijo usando `@Input` y `@Output`.
+
+### Arquitectura de Componentes
+
+```
+RecipeListComponent (PADRE)
+├── FilterBarComponent (HIJO)
+│   • Recibe: searchQuery, selectedCategory, selectedDifficulty, categories (@Input)
+│   • Emite: searchQueryChange, categoryChange, difficultyChange, clearFilters (@Output)
+│
+└── RecipeCardComponent (HIJO) [x N]
+    • Recibe: recipe (@Input)
+    • Emite: edit, delete (@Output)
+```
+
+### Flujo de Comunicación
+
+**Padre → Hijo (Property Binding)**
+```typescript
+<app-filter-bar
+    [searchQuery]="searchQuery()"
+    [categories]="categories()"
+></app-filter-bar>
+```
+
+**Hijo → Padre (Event Binding)**
+```typescript
+<app-filter-bar
+    (searchQueryChange)="handleSearchChange($event)"
+    (clearFilters)="handleClearFilters()"
+></app-filter-bar>
+```
+
+### Documentación Detallada
+
+- 📚 [Guía Técnica Completa](PARENT-CHILD-COMMUNICATION.md)
+- 🧪 [Guía de Pruebas](TEST-PARENT-CHILD.md)
 
 ## 🐳 Docker
 

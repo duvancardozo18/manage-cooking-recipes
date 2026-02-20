@@ -4,7 +4,6 @@
     padding: 2rem;
 }
 
-/* Observer Pattern: Estilos para el banner de notificación */
 .notification-banner {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;

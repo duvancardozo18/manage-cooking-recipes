@@ -1,0 +1,38 @@
+<div class="recipe-card" [routerLink]="['/recipes', recipe.id]">
+    <div class="recipe-image">
+        @if (recipe.imageUrl) {
+        <img [src]="recipe.imageUrl" [alt]="recipe.name" />
+        } @else {
+        <div class="no-image"></div>
+        }
+        <span class="difficulty-badge" [style.background-color]="recipe.difficultyColor">
+            {{ recipe.difficulty | difficulty }}
+        </span>
+    </div>
+
+    <div class="recipe-content">
+        <h3 class="recipe-title">{{ recipe.name }}</h3>
+        <p class="recipe-description">{{ recipe.description }}</p>
+
+        <div class="recipe-meta">
+            <span class="meta-item">
+                {{ recipe.category }}
+            </span>
+            <span class="meta-item">
+                {{ getTotalTime() }} min
+            </span>
+            <span class="meta-item">
+                {{ recipe.servings }} porciones
+            </span>
+        </div>
+
+        <div class="recipe-actions">
+            <button (click)="onEdit($event)" class="btn btn-edit">
+                Editar
+            </button>
+            <button (click)="onDelete($event)" class="btn btn-delete">
+                Eliminar
+            </button>
+        </div>
+    </div>
+</div>
