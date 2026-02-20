@@ -9,8 +9,16 @@ import { Category } from '../../domain/value-objects/category.value-object';
 describe('LocalStorageRecipeRepository', () => {
     let repository: LocalStorageRecipeRepository;
     let localStorageMock: { [key: string]: string };
+    let mockEventService: any;
 
     beforeEach(() => {
+        // Mock EventService
+        mockEventService = {
+            emitRecipeAdded: jest.fn(),
+            emitRecipeUpdated: jest.fn(),
+            emitRecipeDeleted: jest.fn(),
+        };
+
         // Mock localStorage
         localStorageMock = {};
 
@@ -30,7 +38,7 @@ describe('LocalStorageRecipeRepository', () => {
             writable: true,
         });
 
-        repository = new LocalStorageRecipeRepository();
+        repository = new LocalStorageRecipeRepository(mockEventService);
     });
 
     afterEach(() => {
@@ -63,7 +71,7 @@ describe('LocalStorageRecipeRepository', () => {
             ]);
 
             localStorageMock['recipes'] = existingData;
-            const newRepository = new LocalStorageRecipeRepository();
+            const newRepository = new LocalStorageRecipeRepository(mockEventService);
             const recipes = newRepository.findAll();
 
             expect(recipes).toHaveLength(1);

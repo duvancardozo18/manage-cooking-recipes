@@ -19,45 +19,33 @@ describe('FilterBarComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should emit searchQueryChange when search input changes', (done) => {
-        component.searchQueryChange.subscribe((value) => {
-            expect(value).toBe('test search');
-            done();
-        });
+    it('should emit searchQueryChange when search input changes', () => {
+        const emitSpy = jest.spyOn(component.searchQueryChange, 'emit');
         const input = document.createElement('input');
         input.value = 'test search';
         const event = { target: input } as any;
         component.onSearchChange(event);
+        expect(emitSpy).toHaveBeenCalledWith('test search');
     });
 
-    it('should emit categoryChange when category select changes', (done) => {
-        component.categoryChange.subscribe((value) => {
-            expect(value).toBe('Beef');
-            done();
-        });
-        const select = document.createElement('select');
-        select.value = 'Beef';
-        const event = { target: select } as any;
+    it('should emit categoryChange when category select changes', () => {
+        const emitSpy = jest.spyOn(component.categoryChange, 'emit');
+        const event = { target: { value: 'Beef' } } as any;
         component.onCategoryChange(event);
+        expect(emitSpy).toHaveBeenCalledWith('Beef');
     });
 
-    it('should emit difficultyChange when difficulty select changes', (done) => {
-        component.difficultyChange.subscribe((value) => {
-            expect(value).toBe('easy');
-            done();
-        });
-        const select = document.createElement('select');
-        select.value = 'easy';
-        const event = { target: select } as any;
+    it('should emit difficultyChange when difficulty select changes', () => {
+        const emitSpy = jest.spyOn(component.difficultyChange, 'emit');
+        const event = { target: { value: 'easy' } } as any;
         component.onDifficultyChange(event);
+        expect(emitSpy).toHaveBeenCalledWith('easy');
     });
 
-    it('should emit clearFilters when clear button is clicked', (done) => {
-        component.clearFilters.subscribe(() => {
-            expect(true).toBe(true);
-            done();
-        });
+    it('should emit clearFilters when clear button is clicked', () => {
+        const emitSpy = jest.spyOn(component.clearFilters, 'emit');
         component.onClearFilters();
+        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should return true when filters are active', () => {

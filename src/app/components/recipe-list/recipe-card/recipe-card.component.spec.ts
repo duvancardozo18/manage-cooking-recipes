@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RecipeCardComponent } from './recipe-card.component';
 import { RecipeViewModel } from '../../../presentation/view-models/recipe.view-model';
+import { Router, ActivatedRoute } from '@angular/router';
 
 describe('RecipeCardComponent', () => {
     let component: RecipeCardComponent;
@@ -25,8 +26,15 @@ describe('RecipeCardComponent', () => {
     };
 
     beforeEach(async () => {
+        const mockRouter = { navigate: jest.fn() };
+        const mockActivatedRoute = { snapshot: { paramMap: { get: jest.fn() } } };
+
         await TestBed.configureTestingModule({
-            imports: [RecipeCardComponent]
+            imports: [RecipeCardComponent],
+            providers: [
+                { provide: Router, useValue: mockRouter },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute }
+            ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(RecipeCardComponent);

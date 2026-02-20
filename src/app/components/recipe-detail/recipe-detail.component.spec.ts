@@ -9,6 +9,7 @@ import { CookingTime } from '../../domain/value-objects/cooking-time.value-objec
 import { Servings } from '../../domain/value-objects/servings.value-object';
 import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
 import { Category } from '../../domain/value-objects/category.value-object';
+import { RecipeEventService } from '../../infrastructure/services/recipe-event.service';
 
 describe('RecipeDetailComponent', () => {
     let component: RecipeDetailComponent;
@@ -16,6 +17,7 @@ describe('RecipeDetailComponent', () => {
     let mockRecipeService: any;
     let mockRouter: any;
     let mockActivatedRoute: any;
+    let mockEventService: any;
 
     const mockRecipe = new Recipe(
         '1',
@@ -36,6 +38,11 @@ describe('RecipeDetailComponent', () => {
     beforeEach(async () => {
         const recipeUpdatedSubject = new Subject<Recipe>();
         const recipeDeletedSubject = new Subject<string>();
+
+        mockEventService = {
+            recipeUpdated$: recipeUpdatedSubject.asObservable(),
+            recipeDeleted$: recipeDeletedSubject.asObservable(),
+        };
 
         mockRecipeService = {
             getRecipeById: jest.fn().mockReturnValue(mockRecipe),
@@ -62,6 +69,7 @@ describe('RecipeDetailComponent', () => {
                 { provide: RecipeApplicationService, useValue: mockRecipeService },
                 { provide: Router, useValue: mockRouter },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: RecipeEventService, useValue: mockEventService },
             ],
         }).compileComponents();
 
@@ -88,7 +96,8 @@ describe('RecipeDetailComponent', () => {
             const newComponent = new RecipeDetailComponent(
                 mockActivatedRoute,
                 mockRouter,
-                mockRecipeService
+                mockRecipeService,
+                mockEventService
             );
             newComponent.ngOnInit();
 
@@ -100,7 +109,8 @@ describe('RecipeDetailComponent', () => {
             const newComponent = new RecipeDetailComponent(
                 mockActivatedRoute,
                 mockRouter,
-                mockRecipeService
+                mockRecipeService,
+                mockEventService
             );
             newComponent.ngOnInit();
 

@@ -56,7 +56,7 @@ describe('RecipeListComponent', () => {
         const recipeDeletedSubject = new Subject<string>();
 
         mockRecipeService = {
-            getRecipes: jest.fn().mockReturnValue(signal([mockRecipe1, mockRecipe2])),
+            getRecipes: jest.fn().mockReturnValue([mockRecipe1, mockRecipe2]),
             getCategories: jest.fn().mockReturnValue(['Pasta', 'Chicken']),
             searchRecipes: jest.fn().mockReturnValue([mockRecipe1]),
             deleteRecipe: jest.fn().mockReturnValue(true),
