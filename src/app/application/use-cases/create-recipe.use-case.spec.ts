@@ -4,7 +4,7 @@ import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
 import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
 import { Servings } from '../../domain/value-objects/servings.value-object';
-import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Difficulty, DifficultyLevel } from '../../domain/value-objects/difficulty.value-object';
 import { Category } from '../../domain/value-objects/category.value-object';
 
 describe('CreateRecipeUseCase', () => {
@@ -35,7 +35,7 @@ describe('CreateRecipeUseCase', () => {
             prepTime: 15,
             cookTime: 20,
             servings: 4,
-            difficulty: 'medium',
+            difficulty: 'medium' as DifficultyLevel,
             category: 'Pasta',
             imageUrl: 'https://example.com/image.jpg',
         };
@@ -146,7 +146,7 @@ describe('CreateRecipeUseCase', () => {
         });
 
         it('should validate difficulty through Difficulty value object', () => {
-            const invalidInput = { ...validInput, difficulty: 'invalid' };
+            const invalidInput = { ...validInput, difficulty: 'invalid' as any };
 
             expect(() => useCase.execute(invalidInput)).toThrow('Invalid difficulty level');
         });
