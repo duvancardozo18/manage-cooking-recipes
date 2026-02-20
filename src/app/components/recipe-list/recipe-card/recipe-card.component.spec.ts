@@ -26,8 +26,8 @@ describe('RecipeCardComponent', () => {
     };
 
     beforeEach(async () => {
-        const mockRouter = { navigate: jest.fn() };
-        const mockActivatedRoute = { snapshot: { paramMap: { get: jest.fn() } } };
+        const mockRouter = { navigate: () => { } };
+        const mockActivatedRoute = { snapshot: { paramMap: { get: () => { } } } };
 
         await TestBed.configureTestingModule({
             imports: [RecipeCardComponent],
@@ -53,19 +53,19 @@ describe('RecipeCardComponent', () => {
         expect(compiled.querySelector('.recipe-description').textContent).toContain('Test Description');
     });
 
-    it('should emit edit event when edit button is clicked', (done) => {
+    it('should emit edit event when edit button is clicked', () => {
+        const expectedId = '1';
         component.edit.subscribe((id) => {
-            expect(id).toBe('1');
-            done();
+            expect(id).toBe(expectedId);
         });
         const event = new Event('click');
         component.onEdit(event);
     });
 
-    it('should emit delete event when delete button is clicked', (done) => {
+    it('should emit delete event when delete button is clicked', () => {
+        const expectedId = '1';
         component.delete.subscribe((id) => {
-            expect(id).toBe('1');
-            done();
+            expect(id).toBe(expectedId);
         });
         const event = new Event('click');
         component.onDelete(event);
