@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
-import { CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
+import { CreateRecipeInput, UpdateRecipeInput } from '../../application/interfaces/recipe-inputs.interface';
 import { DifficultyLevel } from '../../domain/value-objects/difficulty.value-object';
 
 @Component({
@@ -170,7 +170,7 @@ export class RecipeFormComponent implements OnInit, OnDestroy {
 
             try {
                 if (this.isEditMode() && this.recipeId()) {
-                    const updateData: UpdateRecipeDto = {
+                    const updateData: UpdateRecipeInput = {
                         name: String(formData.name),
                         description: String(formData.description),
                         category: String(formData.category),
@@ -188,7 +188,7 @@ export class RecipeFormComponent implements OnInit, OnDestroy {
                         this.router.navigate(['/recipes', updated.id]);
                     }
                 } else {
-                    const creationData: CreateRecipeDto = {
+                    const creationData: CreateRecipeInput = {
                         name: String(formData.name),
                         description: String(formData.description),
                         category: String(formData.category),

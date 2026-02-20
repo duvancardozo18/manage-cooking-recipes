@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, Inject } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { Recipe } from '../../domain/entities/recipe.entity';
-import { CreateRecipeDto, UpdateRecipeDto } from '../../infrastructure/dtos/recipe.dto';
+import { CreateRecipeInput, UpdateRecipeInput } from '../interfaces/recipe-inputs.interface';
 import { RecipeRepository } from '../../domain/repositories/recipe.repository';
 import { CreateRecipeUseCase } from '../use-cases/create-recipe.use-case';
 import { DeleteRecipeUseCase } from '../use-cases/delete-recipe.use-case';
@@ -23,16 +23,10 @@ export class RecipeApplicationService {
     private deleteRecipeUseCase: DeleteRecipeUseCase;
     private searchRecipesUseCase: SearchRecipesUseCase;
 
-    // Observer Pattern: Subject para notificar cuando se agrega una nueva receta
     private recipeAddedSubject = new Subject<Recipe>();
-    // Observable público para que los componentes se suscriban
     public recipeAdded$ = this.recipeAddedSubject.asObservable();
-
-    // Observer Pattern: Subject para notificar cuando se actualiza una receta
     private recipeUpdatedSubject = new Subject<Recipe>();
     public recipeUpdated$ = this.recipeUpdatedSubject.asObservable();
-
-    // Observer Pattern: Subject para notificar cuando se elimina una receta
     private recipeDeletedSubject = new Subject<string>();
     public recipeDeleted$ = this.recipeDeletedSubject.asObservable();
 
@@ -50,11 +44,10 @@ export class RecipeApplicationService {
 
         this.loadRecipes();
 
-        // Suscribirse a las actualizaciones del repositorio cuando los datos se carguen desde la API
         if ('recipesLoaded$' in this.repository) {
             const apiRepository = this.repository as any;
             apiRepository.recipesLoaded$.subscribe(() => {
-                console.log('🔄 Recipes loaded from API, refreshing...');
+                console.log(' Recipes loaded from API, refreshing...');
                 this.loadRecipes();
             });
         }
@@ -75,12 +68,10 @@ export class RecipeApplicationService {
     }
 
 
-    createRecipe(data: CreateRecipeDto): Recipe | null {
+    createRecipe(data: CreateRecipeInput): Recipe | null {
         try {
             const recipe = this.createRecipeUseCase.execute(data);
             this.loadRecipes();
-
-            // Observer Pattern: Notificar a los observadores que se agregó una nueva receta
             this.recipeAddedSubject.next(recipe);
 
             return recipe;
@@ -90,12 +81,10 @@ export class RecipeApplicationService {
         }
     }
 
-    updateRecipe(id: string, data: UpdateRecipeDto): Recipe | null {
+    updateRecipe(id: string, data: UpdateRecipeInput): Recipe | null {
         try {
             const recipe = this.updateRecipeUseCase.execute(id, data);
-            this.loadRecipes(); // Refresh state
-
-            // Observer Pattern: Notificar a los observadores que se actualizó una receta
+            this.loadRecipes(); 
             if (recipe) {
                 this.recipeUpdatedSubject.next(recipe);
             }
@@ -110,9 +99,7 @@ export class RecipeApplicationService {
     deleteRecipe(id: string): boolean {
         try {
             const result = this.deleteRecipeUseCase.execute(id);
-            this.loadRecipes(); // Refresh state
-
-            // Observer Pattern: Notificar a los observadores que se eliminó una receta
+            this.loadRecipes(); 
             if (result) {
                 this.recipeDeletedSubject.next(id);
             }
