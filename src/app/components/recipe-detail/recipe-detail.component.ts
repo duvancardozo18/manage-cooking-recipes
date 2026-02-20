@@ -18,7 +18,7 @@ import { DifficultyPipe } from '../../presentation/pipes/difficulty.pipe';
 export class RecipeDetailComponent implements OnInit, OnDestroy {
     recipe = signal<RecipeViewModel | undefined>(undefined);
 
-    // Observer Pattern: Almacenar suscripciones
+
     private subscriptions = new Subscription();
     private currentRecipeId: string | null = null;
 
@@ -44,21 +44,21 @@ export class RecipeDetailComponent implements OnInit, OnDestroy {
             }
         }
 
-        // Observer Pattern: Suscribirse a actualizaciones de esta receta
+        
         this.subscriptions.add(
             this.eventService.recipeUpdated$.subscribe((recipe: Recipe) => {
                 if (recipe.id === this.currentRecipeId) {
-                    console.log('✏️ [Observer] Receta actual actualizada:', recipe);
+                    console.log(' [Observer] Receta actual actualizada:', recipe);
                     this.recipe.set(RecipeViewModelMapper.toViewModel(recipe));
                 }
             })
         );
 
-        // Observer Pattern: Suscribirse a eliminación de recetas
+        
         this.subscriptions.add(
             this.eventService.recipeDeleted$.subscribe((id: string) => {
                 if (id === this.currentRecipeId) {
-                    console.log('❌ [Observer] Receta actual eliminada, redirigiendo...');
+                    console.log(' [Observer] Receta actual eliminada, redirigiendo...');
                     this.router.navigate(['/recipes']);
                 }
             })
@@ -67,7 +67,6 @@ export class RecipeDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         console.log('RecipeDetailComponent - ngOnDestroy ejecutado');
-        // Observer Pattern: Cancelar todas las suscripciones
         this.subscriptions.unsubscribe();
     }
 

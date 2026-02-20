@@ -13,7 +13,7 @@ import { DifficultyPipe } from '../../../presentation/pipes/difficulty.pipe';
     styleUrl: './recipe-card.component.css'
 })
 export class RecipeCardComponent {
-    @Input({ required: true }) recipe!: RecipeViewModel;
+    @Input({ required: true }) recipe!: RecipeViewModel; 
     @Output() edit = new EventEmitter<string>();
     @Output() delete = new EventEmitter<string>();
 
@@ -26,14 +26,14 @@ export class RecipeCardComponent {
     onEdit(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
-        console.log('🔔 [Child -> Parent] Emitiendo evento edit para receta:', this.recipe.id);
+        console.log(' Emitiendo evento edit para receta:', this.recipe.id);
         this.edit.emit(this.recipe.id);
     }
 
     onDelete(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
-        console.log('🔔 [Child -> Parent] Emitiendo evento delete para receta:', this.recipe.id);
+        console.log(' Emitiendo evento delete para receta:', this.recipe.id);
         this.delete.emit(this.recipe.id);
     }
 }

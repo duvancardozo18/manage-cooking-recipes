@@ -23,24 +23,24 @@ export class FilterBarComponent {
 
     onSearchChange(event: Event): void {
         const value = (event.target as HTMLInputElement).value;
-        console.log('🔔 [FilterBar -> Parent] Emitiendo cambio de búsqueda:', value);
+        console.log('Emitiendo cambio de búsqueda:', value);
         this.searchQueryChange.emit(value);
     }
 
     onCategoryChange(event: Event): void {
         const value = (event.target as HTMLSelectElement).value;
-        console.log('🔔 [FilterBar -> Parent] Emitiendo cambio de categoría:', value);
+        console.log('Emitiendo cambio de categoría:', value);
         this.categoryChange.emit(value);
     }
 
     onDifficultyChange(event: Event): void {
         const value = (event.target as HTMLSelectElement).value;
-        console.log('🔔 [FilterBar -> Parent] Emitiendo cambio de dificultad:', value);
+        console.log('Emitiendo cambio de dificultad:', value);
         this.difficultyChange.emit(value);
     }
 
     onClearFilters(): void {
-        console.log('🔔 [FilterBar -> Parent] Emitiendo evento limpiar filtros');
+        console.log('Emitiendo evento limpiar filtros');
         this.clearFilters.emit();
     }
 
