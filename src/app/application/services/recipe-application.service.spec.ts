@@ -5,7 +5,7 @@ import { Recipe } from '../../domain/entities/recipe.entity';
 import { RecipeName } from '../../domain/value-objects/recipe-name.value-object';
 import { CookingTime } from '../../domain/value-objects/cooking-time.value-object';
 import { Servings } from '../../domain/value-objects/servings.value-object';
-import { Difficulty } from '../../domain/value-objects/difficulty.value-object';
+import { Difficulty, DifficultyLevel } from '../../domain/value-objects/difficulty.value-object';
 import { Category } from '../../domain/value-objects/category.value-object';
 import { RECIPE_REPOSITORY } from '../../core/providers/repository.providers';
 
@@ -119,9 +119,9 @@ describe('RecipeApplicationService', () => {
             prepTime: 10,
             cookTime: 20,
             servings: 4,
-            difficulty: 'easy',
+            difficulty: 'easy' as DifficultyLevel,
             category: 'Dessert',
-            imageUrl: null,
+            imageUrl: undefined,
         };
 
         it('should create a recipe successfully', () => {
@@ -150,34 +150,6 @@ describe('RecipeApplicationService', () => {
             expect(result).toBe(newRecipe);
         });
 
-        // Test removed: RecipeApplicationService doesn't have recipeAdded$ observable
-        // Events are handled by RecipeEventService, not the application service
-        // it('should emit recipeAdded$ event when recipe is created', (done) => {
-        //     const newRecipe = new Recipe(
-        //         '3',
-        //         RecipeName.create(createData.name),
-        //         createData.description,
-        //         createData.ingredients,
-        //         createData.instructions,
-        //         CookingTime.create(createData.prepTime),
-        //         CookingTime.create(createData.cookTime),
-        //         Servings.create(createData.servings),
-        //         Difficulty.create(createData.difficulty),
-        //         Category.create(createData.category),
-        //         null,
-        //         new Date(),
-        //         new Date()
-        //     );
-        //
-        //     mockRepository.save.mockReturnValue(newRecipe);
-        //
-        //     service.recipeAdded$.subscribe((recipe) => {
-        //         expect(recipe).toBe(newRecipe);
-        //         done();
-        //     });
-        //
-        //     service.createRecipe(createData);
-        // });
 
         it('should throw error for invalid data', () => {
             jest.spyOn(console, 'error').mockImplementation(() => { });
@@ -218,36 +190,6 @@ describe('RecipeApplicationService', () => {
             expect(mockRepository.update).toHaveBeenCalled();
             expect(result).toBe(updatedRecipe);
         });
-
-        // Test removed: RecipeApplicationService doesn't have recipeUpdated$ observable
-        // Events are handled by RecipeEventService, not the application service
-        // it('should emit recipeUpdated$ event when recipe is updated', (done) => {
-        //     const updatedRecipe = new Recipe(
-        //         '1',
-        //         RecipeName.create(updateData.name),
-        //         updateData.description,
-        //         mockRecipe1.ingredients,
-        //         mockRecipe1.instructions,
-        //         mockRecipe1.prepTime,
-        //         mockRecipe1.cookTime,
-        //         mockRecipe1.servings,
-        //         mockRecipe1.difficulty,
-        //         mockRecipe1.category,
-        //         mockRecipe1.imageUrl,
-        //         mockRecipe1.createdAt,
-        //         new Date()
-        //     );
-        //
-        //     mockRepository.findById.mockReturnValue(mockRecipe1);
-        //     mockRepository.update.mockReturnValue(updatedRecipe);
-        //
-        //     service.recipeUpdated$.subscribe((recipe) => {
-        //         expect(recipe).toBe(updatedRecipe);
-        //         done();
-        //     });
-        //
-        //     service.updateRecipe('1', updateData);
-        // });
 
         it('should throw error when recipe not found', () => {
             jest.spyOn(console, 'error').mockImplementation(() => { });
@@ -381,9 +323,8 @@ describe('RecipeApplicationService', () => {
 
         it('should return empty array when no recipes', () => {
             mockRepository.findAll.mockReturnValue([]);
-            const newService = new RecipeApplicationService(mockRepository);
 
-            const result = newService.getCategories();
+            const result = service.getCategories();
 
             expect(result).toEqual([]);
         });
