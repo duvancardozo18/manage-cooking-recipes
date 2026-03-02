@@ -1,3 +1,10 @@
 <div class="app-container">
+  <!-- Loader global para navegación -->
+  @if (isLoading()) {
+  <div class="navigation-loader">
+    <div class="spinner"></div>
+    <p>Cargando...</p>
+  </div>
+  }
   <router-outlet></router-outlet>
 </div>
