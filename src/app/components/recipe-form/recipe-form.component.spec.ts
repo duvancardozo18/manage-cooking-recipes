@@ -192,14 +192,17 @@ describe('RecipeFormComponent', () => {
             component.instructions.at(0).setValue('Test Instruction');
         });
 
-        it('should create a recipe when form is valid in create mode', () => {
+        it('should create a recipe when form is valid in create mode', (done) => {
             component.onSubmit();
 
-            expect(mockRecipeService.createRecipe).toHaveBeenCalled();
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
+            setTimeout(() => {
+                expect(mockRecipeService.createRecipe).toHaveBeenCalled();
+                expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
+                done();
+            }, 600);
         });
 
-        it('should update a recipe when form is valid in edit mode', () => {
+        it('should update a recipe when form is valid in edit mode', (done) => {
             mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('1');
             component.ngOnInit();
             component.isEditMode.set(true);
@@ -207,8 +210,11 @@ describe('RecipeFormComponent', () => {
 
             component.onSubmit();
 
-            expect(mockRecipeService.updateRecipe).toHaveBeenCalled();
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
+            setTimeout(() => {
+                expect(mockRecipeService.updateRecipe).toHaveBeenCalled();
+                expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
+                done();
+            }, 600);
         });
 
         it('should not submit when form is invalid', () => {
@@ -223,14 +229,17 @@ describe('RecipeFormComponent', () => {
             expect(mockRecipeService.updateRecipe).not.toHaveBeenCalled();
         });
 
-        it('should handle errors during submission', () => {
+        it('should handle errors during submission', (done) => {
             mockRecipeService.createRecipe.mockImplementation(() => {
                 throw new Error('Creation failed');
             });
 
             component.onSubmit();
 
-            expect(component.errorMessage()).toBe('Creation failed');
+            setTimeout(() => {
+                expect(component.errorMessage()).toBe('Creation failed');
+                done();
+            }, 600);
         });
     });
 

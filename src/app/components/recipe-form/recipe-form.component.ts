@@ -5,10 +5,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RecipeApplicationService } from '../../application/services/recipe-application.service';
 import { CreateRecipeInput, UpdateRecipeInput } from '../../application/interfaces/recipe-inputs.interface';
 import { DifficultyLevel } from '../../domain/value-objects/difficulty.value-object';
+import { AutofocusDirective } from '../../presentation/directives/autofocus.directive';
+import { TooltipDirective } from '../../presentation/directives/tooltip.directive';
+import { DebounceClickDirective } from '../../presentation/directives/debounce-click.directive';
+import { LoadingDirective } from '../../presentation/directives/loading.directive';
 
 @Component({
     selector: 'app-recipe-form',
-    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    imports: [CommonModule, ReactiveFormsModule, RouterLink, AutofocusDirective, TooltipDirective, DebounceClickDirective, LoadingDirective],
     templateUrl: './recipe-form.component.html',
     styleUrl: './recipe-form.component.css'
 })
@@ -19,6 +23,7 @@ export class RecipeFormComponent implements OnInit, OnDestroy {
     pageTitle = signal('Agregar Nueva Receta');
     errorMessage = signal<string | null>(null);
     formSubmitted = signal(false);
+    isLoading = signal(false);
 
     // Categorías disponibles en español
     categories = [
@@ -168,46 +173,59 @@ export class RecipeFormComponent implements OnInit, OnDestroy {
                 return;
             }
 
+            // Activar indicador de carga
+            this.isLoading.set(true);
+
             try {
-                if (this.isEditMode() && this.recipeId()) {
-                    const updateData: UpdateRecipeInput = {
-                        name: String(formData.name),
-                        description: String(formData.description),
-                        category: String(formData.category),
-                        difficulty: String(formData.difficulty) as DifficultyLevel,
-                        prepTime: Number(formData.prepTime),
-                        cookTime: Number(formData.cookTime),
-                        servings: Number(formData.servings),
-                        imageUrl: formData.imageUrl || null,
-                        ingredients: formData.ingredients,
-                        instructions: formData.instructions
-                    };
+                // Simular operación asíncrona
+                setTimeout(() => {
+                    try {
+                        if (this.isEditMode() && this.recipeId()) {
+                            const updateData: UpdateRecipeInput = {
+                                name: String(formData.name),
+                                description: String(formData.description),
+                                category: String(formData.category),
+                                difficulty: String(formData.difficulty) as DifficultyLevel,
+                                prepTime: Number(formData.prepTime),
+                                cookTime: Number(formData.cookTime),
+                                servings: Number(formData.servings),
+                                imageUrl: formData.imageUrl || null,
+                                ingredients: formData.ingredients,
+                                instructions: formData.instructions
+                            };
 
-                    const updated = this.recipeService.updateRecipe(this.recipeId()!, updateData);
-                    if (updated) {
-                        this.router.navigate(['/recipes', updated.id]);
-                    }
-                } else {
-                    const creationData: CreateRecipeInput = {
-                        name: String(formData.name),
-                        description: String(formData.description),
-                        category: String(formData.category),
-                        difficulty: String(formData.difficulty) as DifficultyLevel,
-                        prepTime: Number(formData.prepTime),
-                        cookTime: Number(formData.cookTime),
-                        servings: Number(formData.servings),
-                        imageUrl: formData.imageUrl,
-                        ingredients: formData.ingredients,
-                        instructions: formData.instructions
-                    };
+                            const updated = this.recipeService.updateRecipe(this.recipeId()!, updateData);
+                            if (updated) {
+                                this.router.navigate(['/recipes', updated.id]);
+                            }
+                        } else {
+                            const creationData: CreateRecipeInput = {
+                                name: String(formData.name),
+                                description: String(formData.description),
+                                category: String(formData.category),
+                                difficulty: String(formData.difficulty) as DifficultyLevel,
+                                prepTime: Number(formData.prepTime),
+                                cookTime: Number(formData.cookTime),
+                                servings: Number(formData.servings),
+                                imageUrl: formData.imageUrl,
+                                ingredients: formData.ingredients,
+                                instructions: formData.instructions
+                            };
 
-                    const newRecipe = this.recipeService.createRecipe(creationData);
-                    if (newRecipe) {
-                        this.router.navigate(['/recipes', newRecipe.id]);
+                            const newRecipe = this.recipeService.createRecipe(creationData);
+                            if (newRecipe) {
+                                this.router.navigate(['/recipes', newRecipe.id]);
+                            }
+                        }
+                        this.errorMessage.set(null);
+                    } catch (error) {
+                        this.errorMessage.set(error instanceof Error ? error.message : 'Ocurrió un error');
+                    } finally {
+                        this.isLoading.set(false);
                     }
-                }
-                this.errorMessage.set(null);
+                }, 2500);
             } catch (error) {
+                this.isLoading.set(false);
                 this.errorMessage.set(error instanceof Error ? error.message : 'Ocurrió un error');
             }
         } else {

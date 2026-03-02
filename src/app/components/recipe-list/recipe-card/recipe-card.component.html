@@ -1,11 +1,12 @@
-<div class="recipe-card" [routerLink]="['/recipes', recipe.id]">
+<div class="recipe-card" [routerLink]="['/recipes', recipe.id]" appHighlight="#f0f0f0" defaultColor="transparent">
     <div class="recipe-image">
         @if (recipe.imageUrl) {
         <img [src]="recipe.imageUrl" [alt]="recipe.name" />
         } @else {
         <div class="no-image"></div>
         }
-        <span class="difficulty-badge" [style.background-color]="recipe.difficultyColor">
+        <span class="difficulty-badge" [style.background-color]="recipe.difficultyColor"
+            appTooltip="Nivel de dificultad" tooltipPosition="top">
             {{ recipe.difficulty | difficulty }}
         </span>
     </div>
@@ -15,22 +16,23 @@
         <p class="recipe-description">{{ recipe.description }}</p>
 
         <div class="recipe-meta">
-            <span class="meta-item">
+            <span class="meta-item" appTooltip="Categoría">
                 {{ recipe.category }}
             </span>
-            <span class="meta-item">
+            <span class="meta-item" appTooltip="Tiempo total de preparación">
                 {{ getTotalTime() }} min
             </span>
-            <span class="meta-item">
+            <span class="meta-item" appTooltip="Cantidad de porciones">
                 {{ recipe.servings }} porciones
             </span>
         </div>
 
         <div class="recipe-actions">
-            <button (click)="onEdit($event)" class="btn btn-edit">
+            <button (click)="onEdit($event)" class="btn btn-edit" appTooltip="Editar esta receta">
                 Editar
             </button>
-            <button (click)="onDelete($event)" class="btn btn-delete">
+            <button (click)="onDelete($event)" class="btn btn-delete" appTooltip="Eliminar esta receta"
+                tooltipPosition="bottom">
                 Eliminar
             </button>
         </div>

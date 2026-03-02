@@ -1,12 +1,14 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AutofocusDirective } from '../../../presentation/directives/autofocus.directive';
+import { TooltipDirective } from '../../../presentation/directives/tooltip.directive';
 
 
 @Component({
     selector: 'app-filter-bar',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AutofocusDirective, TooltipDirective],
     templateUrl: './filter-bar.component.html',
     styleUrl: './filter-bar.component.css'
 })

@@ -1,7 +1,8 @@
-<div class="recipe-form-container">
+<div class="recipe-form-container" [appLoading]="isLoading()" loadingText="Guardando receta...">
     <div class="form-header">
         <h1>{{ pageTitle() }}</h1>
-        <button routerLink="/recipes" class="btn btn-secondary">
+        <button routerLink="/recipes" class="btn btn-secondary" appTooltip="Volver sin guardar cambios"
+            tooltipPosition="bottom">
             Cancelar
         </button>
     </div>
@@ -15,7 +16,7 @@
             <div class="form-group">
                 <label for="name" class="form-label">Nombre de la Receta *</label>
                 <input type="text" id="name" formControlName="name" class="form-input"
-                    [class.error]="isFieldInvalid('name')" placeholder="Ej: Paella Valenciana" />
+                    [class.error]="isFieldInvalid('name')" placeholder="Ej: Paella Valenciana" [appAutofocus]="true" />
                 @if (isFieldInvalid('name')) {
                 <span class="error-message">{{ getFieldError('name') }}</span>
                 }
@@ -80,7 +81,7 @@
                 <div class="form-group">
                     <label for="cookTime" class="form-label">Tiempo de Cocción (minutos) *</label>
                     <input type="number" id="cookTime" formControlName="cookTime" class="form-input"
-                        [class.error]="isFieldInvalid('cookTime')" min="1" required/>
+                        [class.error]="isFieldInvalid('cookTime')" min="1" required />
                     @if (isFieldInvalid('cookTime')) {
                     <span class="error-message">{{ getFieldError('cookTime') }}</span>
                     }
@@ -101,7 +102,8 @@
         <div class="form-section">
             <div class="section-header">
                 <h2 class="section-title">Ingredientes *</h2>
-                <button type="button" (click)="addIngredient()" class="btn btn-add">
+                <button type="button" (click)="addIngredient()" class="btn btn-add"
+                    appTooltip="Agregar un nuevo ingrediente">
                     + Agregar Ingrediente
                 </button>
             </div>
@@ -128,7 +130,7 @@
         <div class="form-section">
             <div class="section-header">
                 <h2 class="section-title">Instrucciones *</h2>
-                <button type="button" (click)="addInstruction()" class="btn btn-add">
+                <button type="button" (click)="addInstruction()" class="btn btn-add" appTooltip="Agregar un nuevo paso">
                     + Agregar Paso
                 </button>
             </div>
@@ -155,22 +157,24 @@
 
         <!-- Form Actions -->
         <div class="form-footer">
-            <p class="required-note">* Campos obligatorios</p>  
+            <p class="required-note">* Campos obligatorios</p>
             @if (errorMessage()) {
-                <div class="alert alert-error">
-                    {{ errorMessage() }}
-                </div>
+            <div class="alert alert-error">
+                {{ errorMessage() }}
+            </div>
             }
         </div>
 
         <div class="form-actions">
-            <button type="button" routerLink="/recipes" class="btn btn-cancel">
+            <button type="button" routerLink="/recipes" class="btn btn-cancel"
+                appTooltip="Cancelar y volver a la lista">
                 Cancelar
             </button>
-            <button type="submit" class="btn btn-primary">
+            <button type="button" class="btn btn-primary" appDebounceClick [debounceTime]="500"
+                (debounceClick)="onSubmit()" appTooltip="Guardar todos los cambios">
                 {{ isEditMode() ? 'Actualizar Receta' : 'Crear Receta' }}
             </button>
         </div>
-        
+
     </form>
 </div>
