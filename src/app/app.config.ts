@@ -1,17 +1,25 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
+import { authHeaderInterceptor } from './core/interceptors/auth-header.interceptor';
+import { errorHandlerInterceptor } from './core/interceptors/error-handler.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(
       routes,
-      withComponentInputBinding(), // Permite binding de parámetros de ruta a inputs
-      withViewTransitions() // Habilita transiciones suaves entre vistas
+      withComponentInputBinding(), 
+      withViewTransitions() 
     ),
-    provideHttpClient(withFetch())
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([
+        authHeaderInterceptor,    
+        errorHandlerInterceptor   
+      ])
+    )
   ]
 };
