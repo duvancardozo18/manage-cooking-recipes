@@ -199,7 +199,7 @@ describe('RecipeFormComponent', () => {
                 expect(mockRecipeService.createRecipe).toHaveBeenCalled();
                 expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
                 done();
-            }, 600);
+            }, 2600);
         });
 
         it('should update a recipe when form is valid in edit mode', (done) => {
@@ -214,7 +214,7 @@ describe('RecipeFormComponent', () => {
                 expect(mockRecipeService.updateRecipe).toHaveBeenCalled();
                 expect(mockRouter.navigate).toHaveBeenCalledWith(['/recipes', mockRecipe.id]);
                 done();
-            }, 600);
+            }, 2600);
         });
 
         it('should not submit when form is invalid', () => {
@@ -239,7 +239,7 @@ describe('RecipeFormComponent', () => {
             setTimeout(() => {
                 expect(component.errorMessage()).toBe('Creation failed');
                 done();
-            }, 600);
+            }, 2600);
         });
     });
 
