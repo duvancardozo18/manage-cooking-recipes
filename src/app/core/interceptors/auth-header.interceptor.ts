@@ -1,6 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
 export const authHeaderInterceptor: HttpInterceptorFn = (req, next) => {
+    const isExternalApi = req.url.startsWith('http://') || req.url.startsWith('https://');
+    if (isExternalApi) {
+        return next(req);
+    }
+
     const requestId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const token = localStorage.getItem('auth_token');
     const modifiedReq = req.clone({

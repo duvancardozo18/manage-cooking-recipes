@@ -3,14 +3,17 @@ import { catchError, throwError, tap } from 'rxjs';
 
 export const errorHandlerInterceptor: HttpInterceptorFn = (req, next) => {
     const startTime = Date.now();
+    const isExternalApi = req.url.startsWith('http://') || req.url.startsWith('https://');
 
     return next(req).pipe(
         tap(event => {
             const duration = Date.now() - startTime;
-            console.log(`[HTTP Success] ${req.method} ${req.url}`, {
-                duration: `${duration}ms`,
-                status: 'success'
-            });
+            if (!isExternalApi) {
+                console.log(`[HTTP Success] ${req.method} ${req.url}`, {
+                    duration: `${duration}ms`,
+                    status: 'success'
+                });
+            }
         }),
 
         catchError((error: HttpErrorResponse) => {
